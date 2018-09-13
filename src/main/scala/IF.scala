@@ -25,4 +25,8 @@ class InstructionFetch extends Module {
   IMEM.instructionAddress := PC
   val instruction = Wire(new Instruction)
   instruction := IMEM.instruction.asTypeOf(new Instruction)
+
+  /**
+    Your code here
+    */
 }

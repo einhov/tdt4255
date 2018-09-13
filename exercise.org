@@ -1,0 +1,143 @@
+* Exercise 1
+  The task in this exercise is to implement a 5-stage pipelined processor for the RISCV32I instruction set.
+  Typically when pipelining we want to occupy every stage, however for this exercise this is not the case, 
+  greatly simplifying the architecture.
+
+  The architecture you will design will look like the following:
+   [[./pics/5stage.png]]
+   
+  Unlike the figure however, only one instruction will be in flight at a time.
+  
+  Consider the following simple program:
+  
+  #+begin_src asm
+    .LC0:
+      .globl	main
+    main:
+      add x2,x2,x2
+      sub x3,x3,x0
+      xor x11,x11,x12
+  #+end_src
+  
+  For exercise 1 this will be rewritten as:
+  
+  #+begin_src asm
+    .LC0:
+      .globl	main
+    main:
+      add x2,x2,x2
+      nop
+      nop
+      nop
+      nop
+      sub x3,x3,x0
+      nop
+      nop
+      nop
+      nop
+      xor x11,x11,x12
+      nop
+      nop
+      nop
+      nop
+  #+end_src
+
+  Which removes any possible hazard.
+  The only case where more than one instruction is in the pipeline is branches and jumps since
+  jumps will be targeted at the instruction.
+  This means that for the JAL and JALR instructions you can assume that the link register will
+  not be used directly after a jump.
+  In short, don't worry about weird corner cases that might arise from interleaving NOPs.
+  
+** Instruction set
+   The chosen instruction set, RISCV32I, is a stripped down instruction set featuring integer 
+   operations for 32 registers, and will be used for both exercises.
+   This frees us from handling exceptions, syscalls and similar instructions, simplifying the 
+   architecture a great deal.
+   A description of each instruction is given in the instructions.org file accompanying this
+   exercise.
+   
+** Getting started
+   Your first move should be to study the 5-stage pipeline design until you get a good idea of 
+   how instructions are executed.
+   What sort of signals should each barrier handle? How is a jump executed? Should all signals
+   be stopped at the barrier? (Answer: No, instruction and memory is synchronous read, and must
+   therefore be considered part of the barrier, see figure)
+
+   [[./pics/IF.png]]
+   The canonical IF stage
+   
+   [[./pics/bypassed.png]]
+   On an FPGA the memory read is synchronous, thus we consider the IMEM block to be part of the
+   barrier.
+   
+   
+** Getting started reading handout code
+   There are quite a lot of files in the handout code, making it difficult to know where and how
+   to start writing code for this assignment.
+   The following files are fully implemented and should not be necessary to alter:
+   + Tile.scala
+     The top level file, this is the module accessible to the test runner.
+   + Registers.scala
+     Already implemented, contains logic for loading and reading registers from the tester, 
+     as well as logic for peeking at register updates.
+   + Imem.scala
+     Already implemented. Features code for loading instructions
+   + Dmem.scala
+     Already implemented. Like the registers, features code for preloading memory and tracking state 
+     updates.
+
+   You are allowed to alter these files, but keep in mind that these files may be updated in case there
+   is an error in the handout code, which might give you annoying merge conflicts.
+   
+   Next up, you can check out the partially implemented files.
+   + Decoder.scala
+     This file decodes ops and outputs control signals. In the skeleton code
+     more signals than the canonical signals (memToReg, regWrite, memRead,
+     memWrite, branch and jump) are decoded. You can choose to decode these
+     elsewhere, or you may do it all in manner laid out. Your choice, do what
+     YOU think is best
+   + IF.scala
+     The instruction fetch stage.
+     Logic for updating the PC is missing, and instruction and PC is not forwarded
+     to the barrier.
+   + ID.scala
+     Most of this stage is missing
+   + MEM.scala
+     Just needs some wiring
+   + CPU.scala
+     This is your toplevel file. In the schematic, notice how the writeback stage writes
+     to the ID stage. This could be handled at the CPU level if you so choose (but you 
+     should refrain from having much logic here, if it complicated it belongs in a module).
+     Regardless, what's missing is barriers, an execute stage and wiring up the already
+     existing components.
+   
+   What's missing?
+   + Barriers
+     You need to create barriers for each stage.
+     Barriers hold state, although sometimes you need to bypass signals as well, as is the
+     case with instruction from IF and memory read from MEM.
+   + Execute stage
+     This stage is missing entirely.
+     You can put the ALU here, or you can put it in its own module which you use in EX.
+
+** Getting started writing code
+   After getting an overview of what is included you will probably feel a little lost on 
+   how to start.
+   A good start is to implement a PC that always counts 4 steps (no branching or jumps),
+   then implement the IF barrier and wire them together in the CPU.scala file.
+
+*** Testing your subcomponent
+    Rather than running the full fledged test runner, you want to write smaller tests per
+    component.
+    For this it is typically enough to write a simple peek poke tester as per the chisel 
+    docs, rather than building something complex (and ultra-janky) like the test framework
+    implemented for grading.
+    
+    Keep in mind that you will get lots of synthesize errors for missing values, you should
+    just set these to 0.U or false.B for the time being, it's an unfortunate side effect
+    of adding partial implementations.
+
+** Assembly tests
+   TODO.
+   Will finish either today or tomorrow (promise)

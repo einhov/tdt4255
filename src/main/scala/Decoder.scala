@@ -29,6 +29,10 @@ class Control() extends Module {
   val N = 0.asUInt(1.W)
   val Y = 1.asUInt(1.W)
 
+  /**
+    If you want to you can choose to remove everything that isn't a control signal.
+    Another alternative is to just temporarily remove what you don't care about and then add it back afterwards.
+    */
   val opcodeMap: Array[(BitPat, List[UInt])] = Array(
 
     // signal      memToReg, regWrite, memRead, memWrite, branch,  jump, branchType,    Op1Select, Op2Select, ImmSelect,    ALUOp

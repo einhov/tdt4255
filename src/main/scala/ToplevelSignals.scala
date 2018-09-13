@@ -75,7 +75,10 @@ object branchType {
 
 /**
   these take the role of the alu source signal.
-  Used in the decoder
+  Used in the decoder.
+  In the solution manual I use these to select signals at the decode stage.
+  You can choose to instead do this in the execute stage, and you may forego
+  using them altogether.
   */
 object Op1Select {
   val rs1 = 0.asUInt(1.W)
