@@ -65,9 +65,11 @@
    therefore be considered part of the barrier, see figure)
 
    [[./pics/IF.png]]
+   
    The canonical IF stage
    
    [[./pics/bypassed.png]]
+   
    On an FPGA the memory read is synchronous, thus we consider the IMEM block to be part of the
    barrier.
    
