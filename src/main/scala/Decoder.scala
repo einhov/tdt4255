@@ -1,7 +1,7 @@
 package Ov1
 import chisel3._
 import chisel3.util.BitPat
-
+import chisel3.util.ListLookup
 
 /**
   Responsible for setting control signals, from the "classic" set in ControlSignals

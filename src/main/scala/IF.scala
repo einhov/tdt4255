@@ -11,6 +11,7 @@ class InstructionFetch extends Module {
         instruction as output.
         */
 
+      val PC = Output(UInt())
 
       // setup/test
       val IMEMsetup = Input(new IMEMsetupSignals)

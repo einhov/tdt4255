@@ -19,7 +19,6 @@ class InstructionDecode extends Module {
 
   val registers    = Module(new Registers).io
   val control      = Module(new Control).io
-  val forwarder    = Module(new Forwarder).io
 
   // Wire up register setup
   registers.setup := io.registerSetup

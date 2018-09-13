@@ -1,7 +1,6 @@
 package Ov1
 import chisel3._
 import chisel3.util._
-import utilz._
 
 
 class MemoryFetch() extends Module {

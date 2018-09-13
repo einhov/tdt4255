@@ -54,7 +54,6 @@ object ControlSignals {
     b.memRead    := false.B
     b.memWrite   := false.B
     b.branch     := false.B
-    b.fastBranch := false.B
     b.jump       := false.B
     b
   }
