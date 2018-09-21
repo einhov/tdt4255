@@ -144,5 +144,56 @@
     It should work as long as you can actually get the design to synthesize.
 
 ** Assembly tests
-   TODO.
-   Will finish either today or tomorrow (promise)
+   In order to run tests the test framework comes equipped with an assembler and emulator for
+   the RISCV instructionset.
+   This allows you to write instructions in scala, run them on an emulator to obtain expected 
+   memory and registry updates which can then be compared with the output of your running processor.
+   An example of this is seen in simpleLoop.scala:
+   #+begin_src scala
+     val program = List(
+       ADD(1, 1, 2),
+       ADD(1, 1, 2),
+       BNE(1, 3, -8),
+       DONE
+     )
+ 
+     val initRegs = Map(
+       1 -> Uint(0),
+       2 -> Uint(1),
+       3 -> Uint(4)
+     )
+   #+end_src
+   Upon running this test with 
+   
+   $> testOnly Ov1.SimpleLoop you will get the following output
+   
+   #+begin_src scala
+     ADD    1, 1, 2  	;; r1 <- r1 + r2 
+     r1 changed from 0x0 to 0x0 + 0x1 = 0x1	PC changed from 0x0 to 0x4
+     
+     ADD    1, 1, 2  	;; r1 <- r1 + r2 
+     r1 changed from 0x1 to 0x1 + 0x1 = 0x2	PC changed from 0x4 to 0x8
+     
+     BNE    1, 3, -8 	;; PC <- (r1 != r3) ? PC <- PC + imm : PC <- PC + 4
+     since 0x2 != r0x4 PC is set to 0x8 + -8 = 0x0
+     
+     ADD    1, 1, 2  	;; r1 <- r1 + r2 
+     r1 changed from 0x2 to 0x2 + 0x1 = 0x3	PC changed from 0x0 to 0x4
+     
+     ADD    1, 1, 2  	;; r1 <- r1 + r2 
+     r1 changed from 0x3 to 0x3 + 0x1 = 0x4	PC changed from 0x4 to 0x8
+     
+     BNE    1, 3, -8 	;; PC <- (r1 != r3) ? PC <- PC + imm : PC <- PC + 4
+     since 0x4 != r0x4 is not met PC is set to 0xC
+     
+     We done
+     DONE--
+   #+end_src
+
+   As you can see the BNE condition is met on the third loop, ending the program.
+   
+*** Writing your own tests
+    As soon as they are done, a battery of tests and associated scores will be pushed.
+    Until then you should write your own tests.
+    To do this you can just use the same template as simpleLoop.scala employs.
+    A list of instructions can be found in RISCVOPS.scala.
