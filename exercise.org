@@ -139,6 +139,9 @@
     Keep in mind that you will get lots of synthesize errors for missing values, you should
     just set these to 0.U or false.B for the time being, it's an unfortunate side effect
     of adding partial implementations.
+    
+    You could also run the TestHarnessTest which attempts to write and read from the memory modules.
+    It should work as long as you can actually get the design to synthesize.
 
 ** Assembly tests
    TODO.
