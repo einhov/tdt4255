@@ -5,23 +5,30 @@ import org.scalatest.{Matchers, FlatSpec}
 import spire.math.{UInt => Uint}
 
 import RISCVutils._
-import RISCVOPS._
+import RISCVasm._
 
-class SimpleLoop extends FlatSpec with Matchers {
+class pseudoAsmTest extends FlatSpec with Matchers {
 
   it should "run a simple looping program" in {
 
+    // yeah, labels and shit
     val program = List(
+      LABEL("loop"),
       ADD(1, 1, 2),
       ADD(1, 1, 2),
-      BNE(1, 3, -8),
+      SW(4, 0, 0),
+      LW(4, 0, 0),
+      BNE(1, 3, "loop"),
       DONE
     )
 
     val initRegs = Map(
+      0 -> Uint(0),
       1 -> Uint(0),
       2 -> Uint(1),
-      3 -> Uint(4)
+      3 -> Uint(4),
+      4 -> Uint(31),
+      5 -> Uint(15)
     )
 
     val initMem = Map[Addr, Word]()

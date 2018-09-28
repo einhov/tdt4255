@@ -1,15 +1,11 @@
 package Ov1
-import atto._, Atto._
-import cats.implicits._
 import spire.math.{UInt => Uint}
-import scala.util.Random.shuffle
 
 
 object RISCVutils {
 
   import RISCVOPS._
   import riscala._
-  import assembler._
 
   type Reg               = Int
   type Imm               = Int
@@ -20,14 +16,17 @@ object RISCVutils {
   type RuntimeError      = String
   type MachineStateLog   = List[MachineState]
 
-
-  case class ExecutionLog(executionLog: MachineStateLog, opLog: List[OP], termination: Either[String, String]){
+  case class ExecutionLog(executionLog: MachineStateLog, opLog: List[OP], termination: Either[String, (String, Addr)]){
     def getDescriptiveLog: String = {
       (executionLog zip executionLog.drop(1) zip opLog)
         .map(x => Function.tupled(describeOp(x._2))(x._1))
         .zip(opLog.map(renderInstruction))
         .map(x => x._2 ++ "\n" ++ x._1)
-        .mkString("--\n","\n\n","--\n")
+        .mkString("--\n","\n\n","--\n") ++
+        (termination match {
+           case Right(x) => s"Final address was ${asHex(x._2.toInt)}"
+           case Left(s) => s
+         })
     }
 
     def getUpdateLog: (List[RegUpdate], List[MemUpdate]) =
@@ -43,21 +42,17 @@ object RISCVutils {
 
     def execute(timeOut: Int, m: MachineState): ExecutionLog = {
       val (stateLog, opLog, error) = stepInstructions(m, this, timeOut)
-      ExecutionLog(stateLog, opLog, error.toLeft("Program terminated successfully"))
+      ExecutionLog(stateLog, opLog, error.toLeft(("Program terminated successfully", stateLog.takeRight(2).head.pc)))
     }
-  }
-  object RISCVProgram {
-    def apply(ops: OP*): RISCVProgram = {
-      val opList = ops.toList
-      RISCVProgram(
-        (opList ::: List(DONE)).zipWithIndex.map{ case(op, idx) =>
-          (Uint(idx*4), op)
-        }.toMap
-      )}
 
-    def apply(ops: List[OP]): RISCVProgram = RISCVProgram(
-      (ops ::: List(DONE)).zipWithIndex.map{ case(op, idx) =>
-        (Uint(idx*4), op)
+  }
+
+  object RISCVProgram {
+
+    def apply(ops: List[RISCVasm.asmOP]): RISCVProgram = RISCVProgram(
+      RISCVasm.toRealOpsWithNOP(ops ::: List(RISCVasm.DONE)).zipWithIndex.map {
+        case(op, idx) =>
+          (Uint(idx*4), op)
       }.toMap)
   }
 
@@ -115,33 +110,13 @@ object RISCVutils {
     (scala.math.log(x) / lnOf2).toInt
   }
 
-  def makeArithmeticOp(result: Reg, inputs: List[Reg]): OP = {
-    val in1 = shuffle(inputs).head
-    val in2 = shuffle(inputs).head
-
-    val ops = List(
-      ADD(result, in1, in2),
-      )
-
-    shuffle(ops).head
-  }
-
-  def makeArithmeticBlock(result: Reg, inputs: List[Reg], length: Int): List[OP] =
-    List.fill(length)(makeArithmeticOp(result, inputs))
-
-
-  def printRegs(r: Map[Int, Uint]): String = {
-    r.toList.sortBy(_._1).map{ case(reg, dword) =>
-      s"x${reg}\t - ${dword.toLong.toHexString}"
-    }.mkString(
-      "--- REGISTERS -----------------------\n",
-      "\n",
-      "\n--- END -----------------------------\n")
-  }
-
-  def printMem(r: Map[Uint, Uint]): String = {
-    r.toList.sortBy(_._1).map{ case(reg, dword) =>
-      s"address x${reg}\t - ${dword.toLong.toHexString}"
-    }.mkString("\n")
+  implicit class MapExt[K,V](val self: Map[K, V]) extends AnyVal {
+    // gets a map value for specified key casting as required type
+    def alter(k: K, v: V): Map[K,V] = {
+      if(self.contains(k))
+        self.updated(k, v)
+      else
+        self + (k -> v)
+    }
   }
 }

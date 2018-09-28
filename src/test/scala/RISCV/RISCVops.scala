@@ -1,9 +1,5 @@
 package Ov1
-import atto._, Atto._
-import cats.implicits._
-
 import spire.math.{UInt => Uint}
-import spire.syntax.literals._
 
 
 object RISCVOPS {
@@ -16,7 +12,6 @@ object RISCVOPS {
   case class BGE(rs1: Reg, rs2: Reg, imm: Imm) extends OP
   case class BLTU(rs1: Reg, rs2: Reg, imm: Imm) extends OP
   case class BGEU(rs1: Reg, rs2: Reg, imm: Imm) extends OP
-
 
   case class JALR(rd: Reg, rs1: Reg, imm: Imm) extends OP
   case class JAL(rd: Reg, imm: Imm) extends OP
@@ -50,6 +45,7 @@ object RISCVOPS {
   case class SW(rs2: Reg, rs1: Reg, offset: Imm) extends OP
   case class LW(rd: Reg, rs1: Reg, offset: Imm) extends OP
 
+  case object NOP extends OP
   case object DONE extends OP
 
 
@@ -93,6 +89,7 @@ object RISCVOPS {
     case  SW(rs2, rs1, offset) => s"SW     $rs2, $offset($rs2) ;; MEM[r$rs1 + $offset] <- r$rs2"
     case  LW(rd, rs1, offset)  => s"LW     $rd,  $offset($rs1) ;; r$rd <- MEM[r$rs1 + $offset]"
 
+    case  NOP => "NOP"
     case _ => "We done"
   }
 
@@ -125,7 +122,7 @@ object RISCVOPS {
                             imm: Imm,
                             opString: String): (MachineState, MachineState) => String = { case(old, next) =>
 
-      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} + $imm = ${hs(next.regs(rd))}" ++
+      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString $imm = ${hs(next.regs(rd))}" ++
         s"\tPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
@@ -134,7 +131,7 @@ object RISCVOPS {
                     rs2: Reg,
                     opString: String): (MachineState, MachineState) => String = { case(old, next) =>
 
-      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} >> r${hs(old.regs(rs2))}[0:4] = ${hs(next.regs(rd))}" ++
+      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString r${hs(old.regs(rs2))}[0:4] = ${hs(next.regs(rd))}" ++
         s"\tPC changed froold ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
@@ -198,8 +195,19 @@ object RISCVOPS {
         s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
     }
 
-    case  SW(rs2, rs1, offset) => { case(old, next) => "describe me!"}
-    case  LW(rd, rs1, offset) => { case(old, next) =>  "describe me!"}
+    case  SW(rs2, rs1, offset) => { case(old, next) =>
+      val address = Uint(offset + old.regs(rs1).toInt)
+      s"M[${address}] changed from ${old.mem.lift(address).getOrElse(0)} to ${next.mem(address)}" ++
+      s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+    }
+
+    case  LW(rd, rs1, offset) => { case(old, next) =>
+      val address = Uint(offset + old.regs(rs1).toInt)
+      s"r${rd} changed from ${old.regs(rd)} to ${next.regs(rd)} by loading from M[$address]" ++
+      s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+    }
+
+    case  NOP => { case(old, next) => "NOP" }
 
     case DONE => { case(old, next) => "DONE" }
   }
@@ -272,8 +280,8 @@ object RISCVOPS {
     case  XORI(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, _^_)
     case   ORI(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, _|_)
 
-    case  SLL(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => Uint(x.toInt >> (y.toInt & 31)))
-    case  SRL(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => Uint(x.toInt >> (y.toInt & 31)))
+    case  SLL(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => Uint(x.toInt << (y.toInt & 31)))
+    case  SRL(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => Uint(x.toInt >>> (y.toInt & 31)))
     case  SRA(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => Uint(x.toInt >> (y.toInt & 31)))
 
     case  SLT(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => if(x.toInt < y.toInt) Uint(1) else Uint(0))
@@ -288,9 +296,33 @@ object RISCVOPS {
     case  LUI(rd, imm)        => m => Right(MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4)))
     case  AUIPC(rd, imm)      => m => Right(MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4)))
 
-    case  SW(rs2, rs1, offset) => ???
-    case  LW(rd, rs1, offset)  => ???
+    case  SW(rs2, rs1, offset) => m => {
+      val address = Uint(offset + m.regs(rs1).toInt)
+      if(address > Uint(4096))
+        Left(s"Attempted illegal write at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
+      else
+        Right(MachineState(m.mem.alter(address, m.regs(rs2)), m.regs, m.pc + Uint(4)))
+    }
+    case  LW(rd, rs1, offset) => m => {
+      val address = Uint(offset + m.regs(rs1).toInt)
+      val inRange = if(address > Uint(4096))
+                      Left(s"Attempted illegal read at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
+                    else
+                      Right(address)
 
+      val unInitializedErrorMsg =
+        s"Attempted read at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)\n" ++
+          "This is a LEGAL address, and according to spec should return whatever happens to be at this location.\n" ++
+          "However YOUR program has not defined what should be on this address, and therefore it is highly unlikely\n" ++
+          "That this is intended behavior. If you disagree feel free to edit the source code"
+
+      for {
+        address <- inRange
+        loadedValue <- m.mem.lift(address).toRight(unInitializedErrorMsg)
+      } yield MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4))
+    }
+
+    case NOP => m => Right(MachineState(m.mem, m.regs, m.pc + Uint(4)))
     case DONE => m => Right(m.copy(pc = Uint(0xF01D1EF7)))
   }
 }

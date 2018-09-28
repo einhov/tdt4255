@@ -4,7 +4,7 @@ import cats.Functor
 import cats.implicits._
 
 import org.scalatest.{Matchers, FlatSpec}
-import scala.Function1
+import spire.syntax.literals.radix._
 
 import scala.util.Random.shuffle
 
@@ -29,28 +29,15 @@ object assembler {
 
 
     val ret = shiftedField | masked
-    // println()
-    // println(s"set field called with first bit: $firstBit, size: $size, field: $field")
-    // println(s"mask is\t\t${asBin(mask.toInt)}")
-    // println(s"instruction is\t${asBin(instruction.toInt)}")
-    // println(s"field is\t${asBin(field.toInt)}")
-    // println(s"shiftedField is\t${asBin(shiftedField.toInt)}")
-    // println(s"shiftedMask is\t${asBin(shiftedMask.toInt)}")
-    // println(s"masked is\t${asBin(masked.toInt)}\n")
-    // println(s"ret is\t${asBin(ret.toInt)}\n")
     ret
   }
 
 
   def getSubField(firstBit: Int, size: Int): Uint => Uint = word => {
-    // println(s"getSubField with $firstBit and $size for $word")
     val bitsLeft = 32 - firstBit
     val bitsRight = 32 - size
     val leftShifted = word << bitsLeft
     val rightShifted = leftShifted >> bitsRight
-    // println(s"target word\t\t${as32BinarySpaced(word.toInt)}")
-    // println(s"after $bitsLeft to the left:\t${as32BinarySpaced(leftShifted.toInt)}")
-    // println(s"after $bitsRight to the right:\t${as32BinarySpaced(rightShifted.toInt)}")
     rightShifted
   }
 
@@ -62,8 +49,6 @@ object assembler {
     */
   def applyImmediate(immediateBits: Int, immediate: Int, points: List[(Int, Int)]): Uint => Uint = instruction => {
 
-    // println(s"Applying immediate with ${points}")
-
     def go(instruction: Uint, immediateIndex: Int, points: List[(Int,Int)]): Uint = points match {
       case h :: t => {
         val (immFirstBit, size) = h
@@ -71,10 +56,6 @@ object assembler {
         val immSubField = getSubField(immediateIndex, size)(Uint(immediate))
         val nextImmIndex = immediateIndex - size
         val nextInstruction = setField(firstBit, size, immSubField)(instruction)
-
-        // println(s"Adding $size bits to immediate field at $immFirstBit from index $immediateIndex of $immediate")
-        // println(s"immSubField: ${immSubField}")
-
         go(nextInstruction, nextImmIndex, points.tail)
       }
       case _ => {
@@ -90,24 +71,18 @@ object assembler {
   def setItypeImmediate(instruction: Uint, immediate: Int): Uint = {
     val points = List((31, 12))
     val huh = applyImmediate(12, immediate, points)(instruction)
-    // println(s"before I Imm ${asHex(instruction.toInt)} with imm = $immediate")
-    // println(s"after  I Imm ${asHex(huh.toInt)}")
     huh
   }
 
   def setStypeImmediate(instruction: Uint, immediate: Int): Uint = {
     val points = List((31, 7), (11, 5))
     val huh = applyImmediate(12, immediate, points)(instruction)
-    // println(s"before S Imm ${asHex(instruction.toInt)}")
-    // println(s"after  S Imm ${asHex(huh.toInt)}")
     huh
   }
 
   def setBtypeImmediate(instruction: Uint, immediate: Int): Uint = {
     val points = List((31, 1), (7, 1), (30, 6), (11, 4))
     val huh = applyImmediate(13, immediate, points)(instruction)
-    // println(s"before B Imm ${asHex(instruction.toInt)}")
-    // println(s"after  B Imm ${asHex(huh.toInt)}")
     huh
   }
 
@@ -115,65 +90,52 @@ object assembler {
   def setUtypeImmediate(instruction: Uint, immediate: Int): Uint = {
     val points = List((31, 20))
     val huh = applyImmediate(20, immediate, points)(instruction)
-    // println(s"before U Imm ${asHex(instruction.toInt)}")
-    // println(s"after  U Imm ${asHex(huh.toInt)}")
     huh
   }
 
   def setJtypeImmediate(instruction: Uint, immediate: Int): Uint = {
     val points = List((31, 1), (19, 8), (20, 1), (30, 10))
     val huh = applyImmediate(21, immediate, points)(instruction)
-    // println(s"before J Imm ${asHex(instruction.toInt)}")
-    // println(s"after  J Imm ${asHex(huh.toInt)}")
     huh
   }
 
   def setShiftTypeImmediate(instruction: Uint, immediate: Int): Uint = {
-    val points = List((24, 4))
-    applyImmediate(5, immediate, points)(instruction)
+    val points = List((24, 5))
+    val huh = applyImmediate(5, immediate, points)(instruction)
+    huh
   }
 
   def setOpCode(opcode: Int): Uint => Uint = instruction => {
     val huh = setField(0, 7, Uint(opcode))(instruction)
-     //println(s"after setOpCode ${asHex(huh.toInt)}")
     huh
   }
 
   def setFunct7(funct7: Int): Uint => Uint = instruction => {
     val huh = setField(25, 7, Uint(funct7))(instruction)
-     //println(s"before setFunct7 ${asHex(instruction.toInt)}")
-     //println(s"after  setFunct7 ${asHex(huh.toInt)}")
     huh
   }
 
   def setFunct3(funct3: Int): Uint => Uint = instruction => {
     val huh = setField(12, 3, Uint(funct3))(instruction)
-     //println(s"after setFunct3 ${asHex(huh.toInt)}")
     huh
   }
 
   def setRs1(rs1: Int): Uint => Uint = instruction => {
     val huh = setField(15, 5, Uint(rs1))(instruction)
-     //println(s"after setRs1 ${asHex(huh.toInt)}")
     huh
   }
 
   def setRs2(rs2: Int): Uint => Uint = instruction => {
     val huh = setField(20, 5, Uint(rs2))(instruction)
-     //println(s"after setRs2 ${asHex(huh.toInt)}")
     huh
   }
 
   def setRd(rd: Int): Uint => Uint = instruction => {
-     //println(s"before setRd ${asHex(instruction.toInt)}")
-     //println(s"after  setRd with value ${rd}")
     val huh = setField(7, 5, Uint(rd))(instruction)
-     //println(s"after  setRd ${asHex(huh.toInt)}")
     huh
   }
 
 
-  import spire.syntax.literals.radix._
 
 
   def assembleRType(op: OP): Uint => Uint = {
@@ -182,6 +144,7 @@ object assembler {
 
     op match {
       case ADD(rd, rs1, rs2)  => setOpCode(x2"0110011") andThen setFunct7(x2"0000000") andThen setFunct3(x2"000") andThen setRegs(rs1, rs2, rd)
+      case AND(rd, rs1, rs2)  => setOpCode(x2"0110011") andThen setFunct7(x2"0000000") andThen setFunct3(x2"111") andThen setRegs(rs1, rs2, rd)
       case SUB(rd, rs1, rs2)  => setOpCode(x2"0110011") andThen setFunct7(x2"0100000") andThen setFunct3(x2"000") andThen setRegs(rs1, rs2, rd)
       case OR(rd, rs1, rs2)   => setOpCode(x2"0110011") andThen setFunct7(x2"0000000") andThen setFunct3(x2"110") andThen setRegs(rs1, rs2, rd)
       case XOR(rd, rs1, rs2)  => setOpCode(x2"0110011") andThen setFunct7(x2"0000000") andThen setFunct3(x2"100") andThen setRegs(rs1, rs2, rd)
@@ -288,8 +251,6 @@ object assembler {
       case LW(_, _, imm)    => setItypeImmediate(_, imm)
     }
   }
-
-
 
 
   def assembleProgram(program: RISCVProgram): List[Uint] = {
