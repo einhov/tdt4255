@@ -114,12 +114,12 @@ object RISCVOPS {
                      cond: (Uint, Uint) => Boolean,
                      condString: String): (MachineState, MachineState) => String = { case(old, next) =>
 
-    if(cond(old.regs(rs1), old.regs(rs2))){
-      s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} PC is set to ${hs(old.pc)} + ${imm} = ${hs(next.pc)}"
-    }
-    else{
-      s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} is not met PC is set to ${hs(next.pc)}"
-    }
+      if(cond(old.regs(rs1), old.regs(rs2))){
+        s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} PC is set to ${hs(old.pc)} + ${imm} = ${hs(next.pc)}"
+      }
+      else{
+        s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} is not met PC is set to ${hs(next.pc)}"
+      }
   }
 
   def describeArithmetic(rd: Reg,
@@ -212,13 +212,13 @@ object RISCVOPS {
     case  SW(rs2, rs1, offset) => { case(old, next) =>
       val address = Uint(offset + old.regs(rs1).toInt)
       s"M[${address}] changed from ${old.mem.lift(address).getOrElse(0)} to ${next.mem(address)}" ++
-      s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+        s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
     }
 
     case  LW(rd, rs1, offset) => { case(old, next) =>
       val address = Uint(offset + old.regs(rs1).toInt)
       s"r${rd} changed from ${old.regs(rd)} to ${next.regs(rd)} by loading from M[$address]" ++
-      s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+        s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
     }
 
     case  NOP => { case(old, next) => "NOP" }
@@ -232,14 +232,14 @@ object RISCVOPS {
                     imm: Imm,
                     cond: (Uint, Uint) => Boolean): MachineUpdate = m => {
 
-    if(cond(m.regs(rs1), m.regs(rs2)))
-      Right(
-        (MachineState(m.mem, m.regs, Uint(m.pc.toInt + imm)),
-         StateUpdate(m)))
-    else
-      Right(
-        (MachineState(m.mem, m.regs, m.pc + Uint(4)),
-         StateUpdate(m)))
+    if(cond(m.regs(rs1), m.regs(rs2))) {
+      val next = MachineState(m.mem, m.regs, Uint(m.pc.toInt + imm))
+      Right((next, StateUpdate(next)))
+    }
+    else {
+      val next = MachineState(m.mem, m.regs, m.pc + Uint(4))
+      Right((next, StateUpdate(next)))
+    }
   }
 
 
@@ -247,9 +247,8 @@ object RISCVOPS {
                         rs1: Reg,
                         rs2: Reg,
                         op: (Uint, Uint) => Uint): MachineUpdate = m => {
-    Right(
-      (m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))),
-       StateUpdate.logReg(rd, m)))
+    val next = m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2)))
+    Right((next,StateUpdate.logReg(rd, next)))
   }
 
 
@@ -257,9 +256,8 @@ object RISCVOPS {
                            rs1: Reg,
                            imm: Imm,
                            op: (Uint, Uint) => Uint): MachineUpdate = m => {
-    Right(
-      (m.updateRegs(rd, op(m.regs(rs1), Uint(imm))),
-       StateUpdate.logReg(rd, m)))
+    val next = m.updateRegs(rd, op(m.regs(rs1), Uint(imm)))
+    Right((next,StateUpdate.logReg(rd, next)))
   }
 
 
@@ -267,9 +265,8 @@ object RISCVOPS {
                    rs1: Reg,
                    rs2: Reg,
                    op: (Uint, Uint) => Uint): MachineUpdate = m => {
-    Right(
-      (m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))),
-       StateUpdate.logReg(rd, m)))
+    val next = m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2)))
+    Right((next,StateUpdate.logReg(rd, next)))
   }
 
 
@@ -277,9 +274,8 @@ object RISCVOPS {
                       rs1: Reg,
                       imm: Imm,
                       op: (Uint, Uint) => Uint): MachineUpdate = m => {
-    Right(
-      (m.updateRegs(rd, op(m.regs(rs1), Uint(imm))),
-       StateUpdate.logReg(rd, m)))
+    val next = m.updateRegs(rd, op(m.regs(rs1), Uint(imm)))
+    Right((next, StateUpdate.logReg(rd, next)))
 
   }
 
@@ -316,30 +312,34 @@ object RISCVOPS {
     case  SLTI(rd, rs1, imm)  => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
     case  SLTIU(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
 
-    case JALR(rd, rs1, imm)  => m => Right(
-      (MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + m.regs(rs1).toInt + imm)),
-       StateUpdate.logReg(rd, m)))
+    case JALR(rd, rs1, imm)  => m => {
+      val next = MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + m.regs(rs1).toInt + imm))
+      Right((next, StateUpdate.logReg(rd, next)))
+    }
 
-    case JAL(rd, imm)        => m => Right(
-      (MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + imm)),
-      StateUpdate(m)))
+    case JAL(rd, imm)        => m => {
+      val next = MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + imm))
+      Right((next, StateUpdate(next)))
+    }
 
-    case  LUI(rd, imm)        => m => Right(
-      (MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4)),
-       StateUpdate.logReg(rd, m)))
+    case  LUI(rd, imm)        => m => {
+      val next = MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4))
+      Right((next, StateUpdate.logReg(rd, next)))
+    }
 
-    case  AUIPC(rd, imm)      => m => Right(
-      (MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4)),
-       StateUpdate.logReg(rd, m)))
+    case  AUIPC(rd, imm)      => m => {
+      val next = MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4))
+      Right((next, StateUpdate.logReg(rd, next)))
+    }
 
     case  SW(rs2, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)
       if(address > Uint(4096))
         Left(s"Attempted illegal write at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
-      else
-        Right(
-          (MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4)),
-           StateUpdate.logMem(address, m)))
+      else {
+        val next = MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4))
+        Right((next,  StateUpdate.logMem(address, next)))
+      }
     }
 
     case  LW(rd, rs1, offset) => m => {
@@ -358,14 +358,20 @@ object RISCVOPS {
       for {
         address <- inRange
         loadedValue <- m.mem.lift(address).toRight(unInitializedErrorMsg)
-      } yield (MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4)),
-               StateUpdate.logReg(rd, m))
+      } yield {
+        val next = MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4))
+        ((next, StateUpdate.logReg(rd, next)))
+      }
     }
 
-    case NOP => m => Right((MachineState(m.mem, m.regs, m.pc + Uint(4)),
-                            StateUpdate(m)))
+    case NOP => m => {
+      val next = MachineState(m.mem, m.regs, m.pc + Uint(4))
+      Right((next, StateUpdate(next)))
+    }
 
-    case DONE => m => Right((m.copy(pc = Uint(0xF01D1EF7)),
-                             StateUpdate(m)))
+    case DONE => m => {
+      val next = m.copy(pc = Uint(0xF01D1EF7))
+      Right((next, StateUpdate(next)))
+    }
   }
 }

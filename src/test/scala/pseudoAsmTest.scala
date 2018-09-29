@@ -16,6 +16,8 @@ class pseudoAsmTest extends FlatSpec with Matchers {
       LABEL("loop"),
       ADD(1, 1, 2),
       ADD(1, 1, 2),
+      ADD(31, 1, 2),
+      ADD(31, 1, 2),
       SW(4, 0, 0),
       LW(4, 0, 0),
       BNE(1, 3, "loop"),
@@ -28,7 +30,8 @@ class pseudoAsmTest extends FlatSpec with Matchers {
       2 -> Uint(1),
       3 -> Uint(4),
       4 -> Uint(31),
-      5 -> Uint(15)
+      5 -> Uint(15),
+      31 -> Uint(0)
     )
 
     val initMem = Map[Addr, Word]()

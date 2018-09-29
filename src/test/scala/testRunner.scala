@@ -71,12 +71,14 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
                     misses: Int): Either[String, (PCLog, PCTrace, Int)] = {
 
     val devicePc = Uint(d.peek(d.dut.io.currentPC).toInt)
-    val (nextPcLog, nextPcTrace, nextMisses) = expectedPC.l match {
-      case h :: t if devicePc == h =>
+    val (nextPCexpect, nextPcTrace, nextMisses) = expectedPC.l match {
+      case h :: t if devicePc == h => {
         (PCLog(t), PCTrace(devicePc :: pcTrace.t), 0)
+      }
 
-      case h :: t =>
+      case h :: t => {
         (expectedPC, PCTrace(devicePc :: pcTrace.t), misses + 1)
+      }
 
       case Nil => (expectedPC, PCTrace(devicePc :: pcTrace.t), misses + 1)
     }
@@ -85,8 +87,9 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       val pcString = pcTrace.t.take(missThreshhold*2).reverse.mkString("\n","\n","\n")
       Left(s"PC derailed! Last ${missThreshhold} device PC trace: $pcString")
     }
-    else
-      Right((nextPcLog, nextPcTrace, nextMisses))
+    else {
+      Right((nextPCexpect, nextPcTrace, nextMisses))
+    }
   }
 
 
@@ -104,7 +107,6 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       nextMem  <- checkMemUpdate(d, expectedMemUpdates)
       (nextPCexpect, nextPCtrace, nextMisses) <- checkPCUpdate(d, expectedPC, pcTrace, misses)
     } yield (nextRegs, nextMem, nextPCexpect, nextPCtrace, nextMisses)
-
     d.step(1)
     ret
   }
@@ -171,8 +173,8 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
         }
       }
       else {
-        stepOne(expectedRegUpdates, expectedMemUpdates, pcTrace, pcUpdates, misses, d) match {
-          case Right((nextReg, nextMem, nextPclog, nextPctrace, nextMisses)) =>
+        stepOne(expectedRegUpdates, expectedMemUpdates, pcTrace, expectedPCupdates, misses, d) match {
+          case Right((nextReg, nextMem, nextPclog, nextPctrace, nextMisses)) => {
             stepMany(
               timeOut - 1,
               nextReg,
@@ -182,6 +184,7 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
               nextMisses,
               finishLine,
               d)
+          }
           case Left(s) => { println(s); d.fail }
         }
       }
@@ -201,6 +204,10 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       println("This test is called with the verbose flag set to true")
       println("Verbose output as follows\n")
       println(log.getDescriptiveLog)
+      println("expeced reg updates")
+      println(log.getUpdateLog._1.map{ case(r, w) => s"r${r}\t<- $w" }.mkString("\n","\n","\n"))
+      println("expeced mem updates")
+      println(log.getUpdateLog._2.map{ case(r, w) => s"M[${r}]\t<- $w" }.mkString("\n","\n","\n"))
       println("\nVerbose output done\n\n")
     }
 
