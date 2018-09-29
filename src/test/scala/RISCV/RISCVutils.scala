@@ -29,7 +29,7 @@ object RISCVutils {
          })
     }
 
-    def getUpdateLog: (List[RegUpdate], List[MemUpdate]) =
+    def getUpdateLog: (List[RegUpdate], List[MemUpdate], List[Addr]) =
       collectExpectedUpdates(executionLog)
 
     def getInitState: MachineState = executionLog.head

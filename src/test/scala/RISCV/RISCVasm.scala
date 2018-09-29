@@ -90,7 +90,7 @@ object RISCVasm {
     case LW(rd, rs1, offset)  => RISCVOPS.LW(rd, rs1, offset)
     case NOP                  => RISCVOPS.NOP
     case DONE                 => RISCVOPS.DONE
-    case _ => RISCVOPS.DONE
+    case _ => RISCVOPS.NOP
   }
 
 

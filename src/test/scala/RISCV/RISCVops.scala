@@ -301,7 +301,8 @@ object RISCVOPS {
       if(address > Uint(4096))
         Left(s"Attempted illegal write at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
       else
-        Right(MachineState(m.mem.alter(address, m.regs(rs2)), m.regs, m.pc + Uint(4)))
+        Right(MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4)))
+      
     }
     case  LW(rd, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)

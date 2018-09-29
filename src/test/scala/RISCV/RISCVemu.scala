@@ -47,7 +47,7 @@ object riscala {
 
 
   // Could be changed to use ops to make it a little faster I suppose
-  def collectExpectedUpdates(ms: MachineStateLog): (List[RegUpdate], List[MemUpdate]) = {
+  def collectExpectedUpdates(ms: MachineStateLog): (List[RegUpdate], List[MemUpdate], List[Addr]) = {
     def compareStates(old: MachineState, next: MachineState) = {
       val memUp = next.mem.toSet.diff(old.mem.toSet).toList.headOption
       val regUp = next.regs.toSet.diff(old.regs.toSet).toList.headOption
@@ -55,6 +55,7 @@ object riscala {
     }
 
     val (memUps, regUps) = ms.zip(ms.drop(1)).map(Function.tupled(compareStates)).unzip
-    (regUps.flatten, memUps.flatten)
+    val PCUps = ms.map(_.pc)
+    (regUps.flatten, memUps.flatten, PCUps)
   }
 }
