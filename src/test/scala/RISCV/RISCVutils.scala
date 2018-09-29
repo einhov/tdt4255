@@ -16,6 +16,9 @@ object RISCVutils {
   type RuntimeError      = String
   type MachineStateLog   = List[MachineState]
 
+  case class PCtrace(t: List[Addr])
+  case class PCLog(l: List[Addr])
+
   case class ExecutionLog(executionLog: MachineStateLog, opLog: List[OP], termination: Either[String, (String, Addr)]){
     def getDescriptiveLog: String = {
       (executionLog zip executionLog.drop(1) zip opLog)
@@ -29,7 +32,7 @@ object RISCVutils {
          })
     }
 
-    def getUpdateLog: (List[RegUpdate], List[MemUpdate], List[Addr]) =
+    def getUpdateLog: (List[RegUpdate], List[MemUpdate], PCLog) =
       collectExpectedUpdates(executionLog)
 
     def getInitState: MachineState = executionLog.head

@@ -66,37 +66,37 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
 
 
   def checkPCUpdate(d: PeekPokeTester[Tile],
-                    pcLog: List[Addr],
-                    pcTrace: List[Addr],
-                    misses: Int): Either[String, (List[Addr], List[Addr], Int)] = {
+                    pcLog: PCLog,
+                    pcTrace: PCtrace,
+                    misses: Int): Either[String, (PCLog, PCtrace, Int)] = {
 
     val devicePc = Uint(d.peek(d.dut.io.currentPC).toInt)
-    val (nextPcLog, nextPcTrace, nextMisses) = pcLog match {
+    val (nextPcLog, nextPcTrace, nextMisses) = pcLog.l match {
       case h :: t =>
         if(devicePc == h)
-          (t, devicePc :: pcTrace, 0)
+          (PCLog(t), PCtrace(devicePc :: pcTrace.t), 0)
         else
-          (pcLog, devicePc :: pcTrace, misses + 1)
-      case Nil => (pcLog, devicePc :: pcTrace, misses + 1)
+          (pcLog, PCtrace(devicePc :: pcTrace.t), misses + 1)
+      case Nil => (pcLog, PCtrace(devicePc :: pcTrace.t), misses + 1)
     }
 
     if(nextMisses > missThreshhold) {
-      val pcString = pcTrace.take(missThreshhold*2).reverse.mkString("\n","\n","\n")
+      val pcString = pcTrace.t.take(missThreshhold*2).reverse.mkString("\n","\n","\n")
       Left(s"PC derailed! Last ${missThreshhold} device PC trace: $pcString")
     }
     else
-      Right((nextPcTrace, nextPcTrace, nextMisses))
+      Right((nextPcLog, nextPcTrace, nextMisses))
   }
 
 
   def stepOne(
     expectedRegUpdates: List[(Reg, Word)],
     expectedMemUpdates: List[(Addr, Word)],
-    pcTrace: List[Addr] = List[Addr](),
-    pcLog: List[Addr],
+    pcTrace: PCtrace = PCtrace(List[Addr]()),
+    pcLog: PCLog,
     misses: Int,
     d: PeekPokeTester[Tile]
-  ): Either[String, (List[(Reg,Word)], List[(Addr,Word)], List[Addr], List[Addr], Int)] = {
+  ): Either[String, (List[(Reg,Word)], List[(Addr,Word)], PCLog, PCtrace, Int)] = {
 
     for {
       nextRegs <- checkRegUpdate(d, expectedRegUpdates)
@@ -146,8 +146,8 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       timeOut: Int,
       expectedRegUpdates: List[(Reg, Word)],
       expectedMemUpdates: List[(Addr, Word)],
-      expectedPCupdates: List[Addr],
-      pcTrace: List[Addr],
+      expectedPCupdates: PCLog,
+      pcTrace: PCtrace,
       misses: Int,
       finishLine: Int, // passed as int due to an asinine scala/chisel type error.
       d: PeekPokeTester[Tile]
@@ -167,7 +167,7 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
         }
       }
       else {
-        stepOne(expectedRegUpdates, expectedMemUpdates, pcUpdates, pcTrace, misses, d) match {
+        stepOne(expectedRegUpdates, expectedMemUpdates, pcTrace, pcUpdates, misses, d) match {
           case Right((nextReg, nextMem, nextPclog, nextPctrace, nextMisses)) =>
             step(1)
             stepMany(
@@ -201,14 +201,20 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       println("\nVerbose output done\n\n")
     }
 
-    setup(machineOps, initReg.toList, initMem.toList, this)
-    stepMany(maxSteps,
-             regUpdates,
-             memUpdates,
-             pcUpdates,
-             List[Addr](),
-             0,
-             log.termination.right.get._2.toInt,
-             this)
+    log.termination match {
+      case Left(s) => { println(s"Attempted to run test that failed in emulator stage.\nError was $s"); this.fail }
+      case Right((_,terminationAddress)) => {
+        setup(machineOps, initReg.toList, initMem.toList, this)
+        stepMany(maxSteps,
+                 regUpdates,
+                 memUpdates,
+                 PCLog(pcUpdates.l.tail),
+                 PCtrace(Nil),
+                 0,
+                 terminationAddress.toInt,
+                 this
+        )
+      }
+    }
   }
 }
