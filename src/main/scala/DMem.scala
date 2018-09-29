@@ -13,14 +13,14 @@ class DMEM extends Module {
 
       val writeEnable = Input(Bool())
       val dataIn      = Input(UInt(32.W))
-      val dataAddress = Input(UInt(8.W))
+      val dataAddress = Input(UInt(12.W))
 
       val dataOut     = Output(UInt(32.W))
 
       val testUpdates = Output(new MemUpdates)
     })
 
-  val data = SyncReadMem(256, UInt(32.W))
+  val data = SyncReadMem(1024, UInt(32.W))
 
   val addressSource = Wire(UInt(32.W))
   val dataSource = Wire(UInt(32.W))
