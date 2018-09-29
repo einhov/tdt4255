@@ -19,7 +19,7 @@ class IMEM() extends Module {
   /**
     SyncReadMem will output the value of the address signal set in the previous cycle.
     */
-  val instructions = SyncReadMem(256, UInt(32.W))
+  val instructions = SyncReadMem(1024, UInt(32.W))
 
   // The address we want to read at during operation. During setup it acts as a write address
   // leading to the somewhat uninformative name shown here.
