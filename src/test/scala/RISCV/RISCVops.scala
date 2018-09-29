@@ -5,6 +5,20 @@ import spire.math.{UInt => Uint}
 object RISCVOPS {
   import RISCVutils._
 
+  case class StateUpdate(r: Option[(Reg, Word)], m: Option[(Addr, Word)], pc: Addr)
+
+  object StateUpdate {
+    def logReg(r: Reg, m: MachineState): StateUpdate =
+      StateUpdate(Some((r, m.regs(r))), None, m.pc)
+    def logMem(a: Addr, m: MachineState): StateUpdate =
+      StateUpdate(None, Some((a, m.mem(a))), m.pc)
+    def apply(m: MachineState): StateUpdate =
+      StateUpdate(None, None, m.pc)
+  }
+
+  type MachineUpdate = MachineState => Either[RuntimeError, (MachineState, StateUpdate)]
+
+
   sealed trait OP
   case class BEQ(rs1: Reg, rs2: Reg, imm: Imm) extends OP
   case class BNE(rs1: Reg, rs2: Reg, imm: Imm) extends OP
@@ -216,48 +230,60 @@ object RISCVOPS {
   def applyBranchOp(rs1: Reg,
                     rs2: Reg,
                     imm: Imm,
-                    cond: (Uint, Uint) => Boolean
-  ): MachineState => Either[RuntimeError,MachineState] = m => {
+                    cond: (Uint, Uint) => Boolean): MachineUpdate = m => {
+
     if(cond(m.regs(rs1), m.regs(rs2)))
-      Right(MachineState(m.mem, m.regs, Uint(m.pc.toInt + imm)))
+      Right(
+        (MachineState(m.mem, m.regs, Uint(m.pc.toInt + imm)),
+         StateUpdate(m)))
     else
-      Right(MachineState(m.mem, m.regs, m.pc + Uint(4)))
+      Right(
+        (MachineState(m.mem, m.regs, m.pc + Uint(4)),
+         StateUpdate(m)))
   }
 
 
   def applyArithmeticOp(rd: Reg,
                         rs1: Reg,
                         rs2: Reg,
-                        op: (Uint, Uint) => Uint): MachineState => Either[RuntimeError,MachineState] = m => {
-    Right(m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))))
+                        op: (Uint, Uint) => Uint): MachineUpdate = m => {
+    Right(
+      (m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))),
+       StateUpdate.logReg(rd, m)))
   }
 
 
   def applyArithmeticOpImm(rd: Reg,
                            rs1: Reg,
                            imm: Imm,
-                           op: (Uint, Uint) => Uint): MachineState => Either[RuntimeError,MachineState] = m => {
-    Right(m.updateRegs(rd, op(m.regs(rs1), Uint(imm))))
+                           op: (Uint, Uint) => Uint): MachineUpdate = m => {
+    Right(
+      (m.updateRegs(rd, op(m.regs(rs1), Uint(imm))),
+       StateUpdate.logReg(rd, m)))
   }
 
 
   def applyShiftOp(rd: Reg,
                    rs1: Reg,
                    rs2: Reg,
-                   op: (Uint, Uint) => Uint): MachineState => Either[RuntimeError,MachineState] = m => {
-    Right(m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))))
+                   op: (Uint, Uint) => Uint): MachineUpdate = m => {
+    Right(
+      (m.updateRegs(rd, op(m.regs(rs1), m.regs(rs2))),
+       StateUpdate.logReg(rd, m)))
   }
 
 
   def applyShiftOpImm(rd: Reg,
                       rs1: Reg,
                       imm: Imm,
-                      op: (Uint, Uint) => Uint): MachineState => Either[RuntimeError,MachineState] = m => {
-    Right(m.updateRegs(rd, op(m.regs(rs1), Uint(imm))))
+                      op: (Uint, Uint) => Uint): MachineUpdate = m => {
+    Right(
+      (m.updateRegs(rd, op(m.regs(rs1), Uint(imm))),
+       StateUpdate.logReg(rd, m)))
+
   }
 
-
-  def applyOperation(op: OP): MachineState => Either[RuntimeError,MachineState] = op match {
+  def applyOperation(op: OP): MachineUpdate = op match {
     case BEQ(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x == y)
     case BNE(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x != y)
     case BGE(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x.toInt >= y.toInt)
@@ -290,20 +316,32 @@ object RISCVOPS {
     case  SLTI(rd, rs1, imm)  => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
     case  SLTIU(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
 
-    case JALR(rd, rs1, imm)  => m => Right(MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + m.regs(rs1).toInt + imm)))
-    case JAL(rd, imm)        => m => Right(MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + imm)))
+    case JALR(rd, rs1, imm)  => m => Right(
+      (MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + m.regs(rs1).toInt + imm)),
+       StateUpdate.logReg(rd, m)))
 
-    case  LUI(rd, imm)        => m => Right(MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4)))
-    case  AUIPC(rd, imm)      => m => Right(MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4)))
+    case JAL(rd, imm)        => m => Right(
+      (MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + imm)),
+      StateUpdate(m)))
+
+    case  LUI(rd, imm)        => m => Right(
+      (MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4)),
+       StateUpdate.logReg(rd, m)))
+
+    case  AUIPC(rd, imm)      => m => Right(
+      (MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4)),
+       StateUpdate.logReg(rd, m)))
 
     case  SW(rs2, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)
       if(address > Uint(4096))
         Left(s"Attempted illegal write at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
       else
-        Right(MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4)))
-      
+        Right(
+          (MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4)),
+           StateUpdate.logMem(address, m)))
     }
+
     case  LW(rd, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)
       val inRange = if(address > Uint(4096))
@@ -320,10 +358,14 @@ object RISCVOPS {
       for {
         address <- inRange
         loadedValue <- m.mem.lift(address).toRight(unInitializedErrorMsg)
-      } yield MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4))
+      } yield (MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4)),
+               StateUpdate.logReg(rd, m))
     }
 
-    case NOP => m => Right(MachineState(m.mem, m.regs, m.pc + Uint(4)))
-    case DONE => m => Right(m.copy(pc = Uint(0xF01D1EF7)))
+    case NOP => m => Right((MachineState(m.mem, m.regs, m.pc + Uint(4)),
+                            StateUpdate(m)))
+
+    case DONE => m => Right((m.copy(pc = Uint(0xF01D1EF7)),
+                             StateUpdate(m)))
   }
 }

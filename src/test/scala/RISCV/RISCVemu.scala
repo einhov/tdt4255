@@ -15,47 +15,33 @@ object riscala {
   import RISCVutils._
 
 
-  def stepInstruction(m: MachineState, p: RISCVProgram): Either[RuntimeError, (OP, MachineState)] =
+  def stepInstruction(m: MachineState, p: RISCVProgram): Either[RuntimeError, (OP, MachineState, StateUpdate)] =
     for {
-      op    <- p.getInstruction(m.pc)
-      nextM <- applyOperation(op)(m)
-    } yield (op, nextM)
+      op                <- p.getInstruction(m.pc)
+      (nextM, logEntry) <- applyOperation(op)(m)
+    } yield (op, nextM, logEntry)
 
 
-  def stepInstructions(init: MachineState, program: RISCVProgram, timeOut: Int): (MachineStateLog, List[OP], Option[RuntimeError]) = {
+  def stepInstructions(init: MachineState, program: RISCVProgram, timeOut: Int): (MachineStateLog, List[OP], List[StateUpdate], Option[RuntimeError]) = {
 
-    def stepHelper(m: MachineState, stepsLeft: Int): Either[RuntimeError, (OP, MachineState)] =
+    def stepHelper(m: MachineState, stepsLeft: Int): Either[RuntimeError, (OP, MachineState, StateUpdate)] =
       for {
         step <- Either.cond(stepsLeft > 0, (), s"timed out after $timeOut steps")
         next <- stepInstruction(m, program)
       } yield next
 
 
-    def go(stateLog: MachineStateLog, opLog: List[OP], m: MachineState, stepsLeft: Int): (MachineStateLog, List[OP], Option[RuntimeError]) = {
+    def go(stateLog: MachineStateLog, opLog: List[OP], updateLog: List[StateUpdate], m: MachineState, stepsLeft: Int): (MachineStateLog, List[OP], List[StateUpdate], Option[RuntimeError]) = {
       if(m.pc === Uint(0xF01D1EF7))
-        (stateLog, opLog, None)
+        (stateLog, opLog, updateLog, None)
       else
         stepHelper(m, stepsLeft) match {
-          case Left(e)     => (stateLog, opLog, Some(e))
-          case Right(next) => go(next._2 :: stateLog, next._1 :: opLog, next._2, stepsLeft - 1)
+          case Left(e)     => (stateLog, opLog, updateLog, Some(e))
+          case Right((op, machineState, update)) => go(machineState :: stateLog, op :: opLog, update :: updateLog, machineState,  stepsLeft - 1)
         }
     }
 
-    val(stateLog, opLog, error) = go(List(init), Nil, init, timeOut)
-    (stateLog.reverse, opLog.reverse, error)
-  }
-
-
-  // Could be changed to use ops to make it a little faster I suppose
-  def collectExpectedUpdates(ms: MachineStateLog): (List[RegUpdate], List[MemUpdate], PCLog) = {
-    def compareStates(old: MachineState, next: MachineState) = {
-      val memUp = next.mem.toSet.diff(old.mem.toSet).toList.headOption
-      val regUp = next.regs.toSet.diff(old.regs.toSet).toList.headOption
-      (memUp, regUp)
-    }
-
-    val (memUps, regUps) = ms.zip(ms.drop(1)).map(Function.tupled(compareStates)).unzip
-    val PCUps = ms.map(_.pc)
-    (regUps.flatten, memUps.flatten, PCLog(PCUps))
+    val(stateLog, opLog, updateLog, error) = go(List(init), Nil, Nil, init, timeOut)
+    (stateLog.reverse, opLog.reverse, updateLog.reverse, error)
   }
 }

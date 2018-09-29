@@ -16,10 +16,10 @@ object RISCVutils {
   type RuntimeError      = String
   type MachineStateLog   = List[MachineState]
 
-  case class PCtrace(t: List[Addr])
+  case class PCTrace(t: List[Addr])
   case class PCLog(l: List[Addr])
 
-  case class ExecutionLog(executionLog: MachineStateLog, opLog: List[OP], termination: Either[String, (String, Addr)]){
+  case class ExecutionLog(executionLog: MachineStateLog, opLog: List[OP], updateLog: List[StateUpdate], termination: Either[String, (String, Addr)]){
     def getDescriptiveLog: String = {
       (executionLog zip executionLog.drop(1) zip opLog)
         .map(x => Function.tupled(describeOp(x._2))(x._1))
@@ -32,8 +32,12 @@ object RISCVutils {
          })
     }
 
-    def getUpdateLog: (List[RegUpdate], List[MemUpdate], PCLog) =
-      collectExpectedUpdates(executionLog)
+    def getUpdateLog: (List[RegUpdate], List[MemUpdate], PCLog) = {
+      val regUpdates = updateLog.map(_.r).flatten
+      val memUpdates = updateLog.map(_.m).flatten
+      val pcUpdates = PCLog(updateLog.map(_.pc))
+      (regUpdates, memUpdates, pcUpdates)
+    }
 
     def getInitState: MachineState = executionLog.head
 
@@ -44,10 +48,9 @@ object RISCVutils {
       instructions.lift(addr).toRight(s"Attempted illegal read from address ${asHex(addr.toInt)}")
 
     def execute(timeOut: Int, m: MachineState): ExecutionLog = {
-      val (stateLog, opLog, error) = stepInstructions(m, this, timeOut)
-      ExecutionLog(stateLog, opLog, error.toLeft(("Program terminated successfully", stateLog.takeRight(2).head.pc)))
+      val (stateLog, opLog, updateLog, error) = stepInstructions(m, this, timeOut)
+      ExecutionLog(stateLog, opLog, updateLog, error.toLeft(("Program terminated successfully", stateLog.takeRight(2).head.pc)))
     }
-
   }
 
   object RISCVProgram {
