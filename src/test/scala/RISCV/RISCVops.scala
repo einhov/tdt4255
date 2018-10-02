@@ -327,7 +327,7 @@ object RISCVOPS {
     case  SLT(rd, rs1, rs2)   => applyArithmeticOp(rd, rs1, rs2, (x, y) => if(x.toInt < y.toInt) Uint(1) else Uint(0))
     case  SLTU(rd, rs1, rs2)  => applyArithmeticOp(rd, rs1, rs2, (x, y) => if(x < y) Uint(1) else Uint(0))
 
-    case  SLTI(rd, rs1, imm)  => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
+    case  SLTI(rd, rs1, imm)  => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x.toInt < y.toInt) Uint(1) else Uint(0))
     case  SLTIU(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
 
     case JALR(rd, rs1, imm)  => m => {

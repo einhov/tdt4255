@@ -32,6 +32,7 @@ class ImmediateArithmeticTests extends FlatSpec with Matchers {
     x17 -> Uint(0x7FFFFFFF),
     x18 -> Uint(0x7FFFFFAA),
 
+    x31 -> Uint(0x0),
     )
 
   val initMem = Map[Addr, Word]()
