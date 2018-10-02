@@ -55,9 +55,14 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
         val regWriteData            = d.peek(d.dut.io.regsDeviceWriteData)
         val regWriteDataErrorMsg    = s"Attempted to write wrong data to address $regWriteAddress. Written was ${regWriteData}, Expected data was ${expected.head._1.toBigInt}"
 
-        d.expect(d.dut.io.regsDeviceWriteAddress, expected.head._1.toBigInt, regWriteAddressErrorMsg)
-        d.expect(d.dut.io.regsDeviceWriteData, expected.head._2.toBigInt, regWriteDataErrorMsg)
-        Right(expected.tail)
+        // writes to x0 are not recorded
+        if(regWriteAddress == Uint(0))
+          Right(expected)
+        else {
+          d.expect(d.dut.io.regsDeviceWriteAddress, expected.head._1.toBigInt, regWriteAddressErrorMsg)
+          d.expect(d.dut.io.regsDeviceWriteData, expected.head._2.toBigInt, regWriteDataErrorMsg)
+          Right(expected.tail)
+        }
       }
     }
     else

@@ -49,6 +49,7 @@ class SquareTest extends FlatSpec with Matchers {
       ADD(x10, x2, x0),
       BNE(x10, x8, "loop1"),
 
+      NOP,
       DONE,
 
       // calling convention: x1 as return address, x2 - 4 as args
