@@ -55,33 +55,29 @@
      BNE(x6, x2, "loop2"),
    #+end_src
    
+   
+   In your design, what is the value of each of the control signals below?
+    
+   + memToReg
+   + regWrite
+   + memRead
+   + memWrite
+   + branch
+   + jump
+
    Keep in mind that your design and your implementation are separate entities, thus
    you should answer this question based on your ideal design, not your finished 
    implementation.
    
-*** subquestion 1
-    In your design, what is the value of each of the control signals below?
-    
-    memToReg
-    regWrite
-    memRead
-    memWrite
-    branch
-    jump
-    
-*** subquestion 2
-    In your design, how do you decide wether to take the branch or not?
-   
-
 ** Question 3
    During execution, at some arbitrary cycle the control signals are 
 
-   memToReg = 0
-   regWrite = 1
-   memRead  = 0
-   memWrite = 0
-   branch   = 0
-   jump     = 1
+   + memToReg = 0
+   + regWrite = 1
+   + memRead  = 0
+   + memWrite = 0
+   + branch   = 0
+   + jump     = 1
    
    In your design, which intruction(s) could be executing?
    Keep in mind that your design and your implementation are separate entities, thus
