@@ -17,14 +17,26 @@ object RISCVasm {
   case class BLTU(rs1: Reg, rs2: Reg, imm: String) extends asmOP
   case class BGEU(rs1: Reg, rs2: Reg, imm: String) extends asmOP
 
-  case class JALR(rd: Reg, rs1: Reg, imm: String) extends asmOP
+  case class JALR(rd: Reg, rs1: Reg, imm: Either[String, Imm]) extends asmOP
+  object JALR {
+    def apply(rd: Reg, rs1: Reg, imm: String): JALR =
+      JALR(rd, rs1, Left(imm))
+    def apply(rd: Reg, rs1: Reg, imm: Imm): JALR =
+      JALR(rd, rs1, Right(imm))
+  }
+
   case class JAL(rd: Reg, imm: String) extends asmOP
+
+  case class JR(rs1: Reg) extends asmOP
+  case class LI(rd: Reg, imm: Imm) extends asmOP
+  case class J(imm: Imm) extends asmOP
 
   case class ADD(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
   case class SUB(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
   case class AND(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
   case class XOR(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
   case class  OR(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
+  case class MOV(rd: Reg, rs1: Reg) extends asmOP
 
   case class ADDI(rd: Reg, rs1: Reg, imm: Imm) extends asmOP
   case class ANDI(rd: Reg, rs1: Reg, imm: Imm) extends asmOP
@@ -55,15 +67,18 @@ object RISCVasm {
   case object DONE extends asmOP
 
   def toRealOP(asmOP: asmOP, labels: Map[String, Addr], address: Addr): Ov1.RISCVOPS.OP = asmOP match {
-    case BEQ(rs1, rs2, imm)  => RISCVOPS.BEQ(rs1, rs2, (labels(imm) - address).toInt)
-    case BNE(rs1, rs2, imm)  => RISCVOPS.BNE(rs1, rs2, (labels(imm) - address).toInt)
-    case BGE(rs1, rs2, imm)  => RISCVOPS.BGE(rs1, rs2, (labels(imm) - address).toInt)
-    case BLT(rs1, rs2, imm)  => RISCVOPS.BLT(rs1, rs2, (labels(imm) - address).toInt)
-    case BLTU(rs1, rs2, imm) => RISCVOPS.BLTU(rs1, rs2,(labels(imm) - address).toInt)
-    case BGEU(rs1, rs2, imm) => RISCVOPS.BGEU(rs1, rs2,(labels(imm) - address).toInt)
+    case BEQ(rs1, rs2, imm)    => RISCVOPS.BEQ(rs1, rs2, (labels(imm) - address).toInt)
+    case BNE(rs1, rs2, imm)    => RISCVOPS.BNE(rs1, rs2, (labels(imm) - address).toInt)
+    case BGE(rs1, rs2, imm)    => RISCVOPS.BGE(rs1, rs2, (labels(imm) - address).toInt)
+    case BLT(rs1, rs2, imm)    => RISCVOPS.BLT(rs1, rs2, (labels(imm) - address).toInt)
+    case BLTU(rs1, rs2, imm)   => RISCVOPS.BLTU(rs1, rs2,(labels(imm) - address).toInt)
+    case BGEU(rs1, rs2, imm)   => RISCVOPS.BGEU(rs1, rs2,(labels(imm) - address).toInt)
 
-    case JALR(rd, rs1, imm)  => RISCVOPS.JALR(rd, rs1, (labels(imm) - address).toInt)
-    case JAL(rd, imm)        => RISCVOPS.JAL(rd,       (labels(imm) - address).toInt)
+    case JALR(rd, rs1, imm)    => imm match {
+      case Right(i) => RISCVOPS.JALR(rd, rs1, i.toInt)
+      case Left(s)  => RISCVOPS.JALR(rd, rs1, (labels(s) - address).toInt)
+    }
+    case JAL(rd, imm)         => RISCVOPS.JAL(rd,       (labels(imm) - address).toInt)
 
     case ADD(rd, rs1, rs2)    => RISCVOPS.ADD(rd, rs1, rs2)
     case SUB(rd, rs1, rs2)    => RISCVOPS.SUB(rd, rs1, rs2)
@@ -88,6 +103,12 @@ object RISCVasm {
     case AUIPC(rd, imm)       => RISCVOPS.AUIPC(rd, imm)
     case SW(rs2, rs1, offset) => RISCVOPS.SW(rs2, rs1, offset)
     case LW(rd, rs1, offset)  => RISCVOPS.LW(rd, rs1, offset)
+
+      // pseudo ops
+    case JR(rs1)              => RISCVOPS.JALR(0, rs1, 0)
+    case LI(rd, imm)          => RISCVOPS.ADDI(rd, 0, imm)
+    case MOV(rd, rs1)         => RISCVOPS.ADD(rd, 0, rs1)
+    case J(imm)               => RISCVOPS.JAL(0, imm)
     case NOP                  => RISCVOPS.NOP
     case DONE                 => RISCVOPS.DONE
     case _ => RISCVOPS.NOP
@@ -117,16 +138,16 @@ object RISCVasm {
 }
 
 object regNames {
-  val x0 = 0
-  val x1 = 1
-  val x2 = 2
-  val x3 = 3
-  val x4 = 4
-  val x5 = 5
-  val x6 = 6
-  val x7 = 7
-  val x8 = 8
-  val x9 = 9
+  val x0  = 0
+  val x1  = 1
+  val x2  = 2
+  val x3  = 3
+  val x4  = 4
+  val x5  = 5
+  val x6  = 6
+  val x7  = 7
+  val x8  = 8
+  val x9  = 9
 
   val x10 = 10
   val x11 = 11
@@ -152,4 +173,43 @@ object regNames {
 
   val x30 = 30
   val x31 = 31
+
+
+  val zero = 0
+  val ra   = 1
+  val sp   = 2
+  val gp   = 3
+  val tp   = 4
+  val t0   = 5
+  val t1   = 6
+  val t2   = 7
+  val s0   = 8
+  val fp   = 8
+  val s1   = 9
+
+  val a0   = 10
+  val a1   = 11
+  val a2   = 12
+  val a3   = 13
+  val a4   = 14
+  val a5   = 15
+  val a6   = 16
+  val a7   = 17
+  val s2   = 18
+  val s3   = 19
+
+  val s4   = 20
+  val s5   = 21
+  val s6   = 22
+  val s7   = 23
+  val s8   = 24
+  val s9   = 25
+  val s10  = 26
+  val s11  = 27
+  val t3   = 28
+  val t4   = 29
+
+  val t5   = 30
+  val t6   = 31
+
 }

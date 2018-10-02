@@ -7,9 +7,24 @@ object RISCVOPS {
 
   case class StateUpdate(r: Option[(Reg, Word)], m: Option[(Addr, Word)], pc: Addr)
 
+  implicit class RegMapExt(val self: Map[Reg, Word]) extends AnyVal {
+    // gets a map value for specified key casting as required type
+    def updatedR(k: Reg, w: Word): Map[Reg,Word] = {
+      if(k == 0)
+        self
+      else
+        self.updated(k, w)
+    }
+  }
+
+
   object StateUpdate {
-    def logReg(r: Reg, m: MachineState): StateUpdate =
-      StateUpdate(Some((r, m.regs(r))), None, m.pc)
+    def logReg(r: Reg, m: MachineState): StateUpdate = {
+      if(r != 0)
+        StateUpdate(Some((r, m.regs(r))), None, m.pc)
+      else
+        StateUpdate(None, None, m.pc)
+    }
     def logMem(a: Addr, m: MachineState): StateUpdate =
       StateUpdate(None, Some((a, m.mem(a))), m.pc)
     def apply(m: MachineState): StateUpdate =
@@ -112,31 +127,34 @@ object RISCVOPS {
                      rs2: Reg,
                      imm: Imm,
                      cond: (Uint, Uint) => Boolean,
-                     condString: String): (MachineState, MachineState) => String = { case(old, next) =>
+                     condString: String,
+                     signed: Boolean = false): (MachineState, MachineState) => String = { case(old, next) =>
 
       if(cond(old.regs(rs1), old.regs(rs2))){
-        s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} PC is set to ${hs(old.pc)} + ${imm} = ${hs(next.pc)}"
+        s"since ${old.regs(rs1).show(signed)} $condString ${old.regs(rs2).show(signed)} PC is set to ${hs(old.pc)} + ${imm} = ${hs(next.pc)}"
       }
       else{
-        s"since ${hs(old.regs(rs1))} $condString r${hs(old.regs(rs2))} is not met PC is set to ${hs(next.pc)}"
+        s"since ${old.regs(rs1).show(signed)} $condString ${old.regs(rs2).show(signed)} is not met PC is set to ${hs(next.pc)}"
       }
   }
 
   def describeArithmetic(rd: Reg,
                          rs1: Reg,
                          rs2: Reg,
-                         opString: String): (MachineState, MachineState) => String = { case(old, next) =>
+                         opString: String,
+                         signed: Boolean = false): (MachineState, MachineState) => String = { case(old, next) =>
 
-      s"r${rd} changed from ${hs(old.regs(rd))} to ${hs(old.regs(rs1))} $opString ${hs(old.regs(rs2))} = ${hs(next.regs(rd))}" ++
+      s"r${rd} changed from ${old.regs(rd).show(signed)} to ${old.regs(rs1).show(signed)} $opString ${hs(old.regs(rs2))} = ${hs(next.regs(rd))}" ++
         s"\tPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
   def describeArithmeticImm(rd: Reg,
                             rs1: Reg,
                             imm: Imm,
-                            opString: String): (MachineState, MachineState) => String = { case(old, next) =>
+                            opString: String,
+                            signed: Boolean = false): (MachineState, MachineState) => String = { case(old, next) =>
 
-      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString $imm = ${hs(next.regs(rd))}" ++
+      s"r${rd} changed from ${old.regs(rd).show(signed)} to ${old.regs(rs1).show(signed)} $opString $imm = ${hs(next.regs(rd))}" ++
         s"\tPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
@@ -145,7 +163,7 @@ object RISCVOPS {
                     rs2: Reg,
                     opString: String): (MachineState, MachineState) => String = { case(old, next) =>
 
-      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString r${hs(old.regs(rs2))}[0:4] = ${hs(next.regs(rd))}" ++
+      s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString ${hs(old.regs(rs2))}[0:4] = ${hs(next.regs(rd))}" ++
         s"\tPC changed froold ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
@@ -159,12 +177,12 @@ object RISCVOPS {
   }
 
   def describeOp(op: OP): (MachineState, MachineState) => String = op match {
-    case BEQ(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt == y.toInt, "==")
-    case BNE(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt != y.toInt, "!=")
-    case BGE(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt >= y.toInt, ">=")
-    case BLT(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt <= y.toInt,  "<")
+    case BEQ(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt == y.toInt, "==", true)
+    case BNE(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt != y.toInt, "!=", true)
+    case BGE(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt >= y.toInt, ">=", true)
+    case BLT(rs1, rs2, imm) =>  describeBranch(rs1, rs2, imm, (x,y) => x.toInt <= y.toInt,  "<", true)
     case BLTU(rs1, rs2, imm) => describeBranch(rs1, rs2, imm, _<_, "==")
-    case BGEU(rs1, rs2, imm) => describeBranch(rs1, rs2, imm, _>=_, "==")
+    case BGEU(rs1, rs2, imm) => describeBranch(rs1, rs2, imm, _>=_, ">=")
 
     case ADD(rd: Reg, rs1: Reg, rs2: Reg) => describeArithmetic(rd,rs1, rs2, "+")
     case SUB(rd: Reg, rs1: Reg, rs2: Reg) => describeArithmetic(rd,rs1, rs2, "-")
@@ -186,9 +204,9 @@ object RISCVOPS {
     case  SRA(rd, rs1, rs2) => describeShift(rd, rs1, rs2, ">>>")
 
     case  SLTI(rd, rs1, imm)  => describeArithmeticImm(rd, rs1, imm, "<")
-    case  SLTIU(rd, rs1, imm) => describeArithmeticImm(rd, rs1, imm, "<u")
+    case  SLTIU(rd, rs1, imm) => describeArithmeticImm(rd, rs1, imm, "<u", true)
     case  SLT(rd, rs1, rs2)   => describeArithmetic(rd, rs1, rs2, "<")
-    case  SLTU(rd, rs1, rs2)  => describeArithmetic(rd, rs1, rs2, "<u")
+    case  SLTU(rd, rs1, rs2)  => describeArithmetic(rd, rs1, rs2, "<u", true)
 
     case  LUI(rd, imm) => { case(old, next) =>
       s"r${rd} changed from ${hs(old.regs(rd))} to r${imm} << 12 = ${hs(next.regs(rd))}" ++
@@ -283,9 +301,9 @@ object RISCVOPS {
     case BEQ(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x == y)
     case BNE(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x != y)
     case BGE(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x.toInt >= y.toInt)
+    case BGEU(rs1, rs2, imm) => applyBranchOp(rs1, rs2, imm, (x, y) => x >= y)
     case BLT(rs1, rs2, imm)  => applyBranchOp(rs1, rs2, imm, (x, y) => x.toInt <  y.toInt)
-    case BLTU(rs1, rs2, imm) => applyBranchOp(rs1, rs2, imm, (x, y) => x >= y)
-    case BGEU(rs1, rs2, imm) => applyBranchOp(rs1, rs2, imm, (x, y) => x <  y)
+    case BLTU(rs1, rs2, imm) => applyBranchOp(rs1, rs2, imm, (x, y) => x < y)
 
     case ADD(rd: Reg, rs1: Reg, rs2: Reg) => applyArithmeticOp(rd, rs1, rs2, _+_)
     case SUB(rd: Reg, rs1: Reg, rs2: Reg) => applyArithmeticOp(rd, rs1, rs2, _-_)
@@ -313,22 +331,22 @@ object RISCVOPS {
     case  SLTIU(rd, rs1, imm) => applyArithmeticOpImm(rd, rs1, imm, (x, y) => if(x < y) Uint(1) else Uint(0))
 
     case JALR(rd, rs1, imm)  => m => {
-      val next = MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + m.regs(rs1).toInt + imm))
+      val next = MachineState(m.mem, m.regs.updatedR(rd, m.pc + Uint(4)), Uint((m.regs(rs1).toInt + imm) & 0xFFFFFFFE))
       Right((next, StateUpdate.logReg(rd, next)))
     }
 
-    case JAL(rd, imm)        => m => {
-      val next = MachineState(m.mem, m.regs.updated(rd, m.pc + Uint(4)), Uint(m.pc.toInt + imm))
-      Right((next, StateUpdate(next)))
-    }
-
-    case  LUI(rd, imm)        => m => {
-      val next = MachineState( m.mem, m.regs.updated(rd, Uint(imm << 12)), m.pc + Uint(4))
+    case JAL(rd, imm) => m => {
+      val next = MachineState(m.mem, m.regs.updatedR(rd, m.pc + Uint(4)), Uint((m.pc.toInt + imm) & 0xFFFFFFFE))
       Right((next, StateUpdate.logReg(rd, next)))
     }
 
-    case  AUIPC(rd, imm)      => m => {
-      val next = MachineState( m.mem, m.regs.updated(rd, m.pc << 12), m.pc + Uint(4))
+    case  LUI(rd, imm) => m => {
+      val next = MachineState( m.mem, m.regs.updatedR(rd, Uint(imm << 12)), m.pc + Uint(4))
+      Right((next, StateUpdate.logReg(rd, next)))
+    }
+
+    case  AUIPC(rd, imm) => m => {
+      val next = MachineState( m.mem, m.regs.updatedR(rd, m.pc + Uint(imm << 12)), m.pc + Uint(4))
       Right((next, StateUpdate.logReg(rd, next)))
     }
 
@@ -359,7 +377,7 @@ object RISCVOPS {
         address <- inRange
         loadedValue <- m.mem.lift(address).toRight(unInitializedErrorMsg)
       } yield {
-        val next = MachineState(m.mem, m.regs.updated(rd, loadedValue), m.pc + Uint(4))
+        val next = MachineState(m.mem, m.regs.updatedR(rd, loadedValue), m.pc + Uint(4))
         ((next, StateUpdate.logReg(rd, next)))
       }
     }

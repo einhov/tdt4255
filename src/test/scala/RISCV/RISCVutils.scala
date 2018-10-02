@@ -69,8 +69,12 @@ object RISCVutils {
         copy(mem = mem.updated(addr, word), pc = pc + Uint(4))
       }
 
-    def updateRegs(rd: Reg, word: Word): MachineState =
-      copy(regs = regs.updated(rd, word), pc = pc + Uint(4))
+    def updateRegs(rd: Reg, word: Word): MachineState = {
+      if(rd != 0)
+        copy(regs = regs.updated(rd, word), pc = pc + Uint(4))
+      else
+        copy(pc = pc + Uint(4))
+    }
 
     def readMem(addr: Addr): Option[Word] =
       mem.lift(addr)
@@ -116,13 +120,14 @@ object RISCVutils {
     (scala.math.log(x) / lnOf2).toInt
   }
 
-  implicit class MapExt[K,V](val self: Map[K, V]) extends AnyVal {
-    // gets a map value for specified key casting as required type
-    def alter(k: K, v: V): Map[K,V] = {
-      if(self.contains(k))
-        self.updated(k, v)
+
+  implicit class UintExt(val self: Uint) {
+    def showS: String = s"${self.toInt}"
+    def showU: String = hs(self)
+    def show(signed: Boolean): String =
+      if(signed)
+        showS
       else
-        self + (k -> v)
-    }
+        showU
   }
 }
