@@ -1,0 +1,120 @@
+* Theory question EX1
+  These questions can be answered in any order.
+  
+  Keep in mind that your design and your implementation are separate entities,
+  thus you should answer these questions based on your ideal design, not your
+  finished implementation. Consequently I will not consider your implementation
+  when grading these questions, thus even with no implementation at all you
+  should still be able to score 100% on the theory questions.
+  
+  All questions can be answered in a few sentences. Remember that brevity is the
+  soul of wit, and also the key to getting a good score.
+
+** Question 1
+   In the square.scala test the following program can be found
+   #+begin_src scala
+    LABEL("setup"),
+    LI(x8,  16), // desugars to ADDI(x8, x0, 16)
+    LI(x10, 2),
+
+    LABEL("loop1"),
+    ADD(x2, x10, x0),
+    JAL(x1, "square_number"),
+    ADD(x10, x2, x0),
+    BNE(x10, x8, "loop1"),
+
+    DONE,
+
+
+    // calling convention: x1 as return address, x2 - 4 as args
+    // calling convention: x2 as return value
+    LABEL("square_number"),
+
+    // partial result
+    ADD(x5, x0, x0),
+
+    // loop counter
+    ADD(x6, x0, x0),
+
+    LABEL("loop2"),
+    ADD(x5, x5, x2),
+    ADDI(x6, x6, 1),
+    BNE(x6, x2, "loop2"),
+
+    // return jump
+    ADD(x2, x0, x5),
+    JR(x1) // desugars to JALR(x0, x1, 0)
+   #+end_src
+
+   Write a program that does the same as the assembly program in C or pseudocode
+   (or whatever language you prefer so long as it's not assembly)
+
+** Question 2
+   When decoding the BNE branch instruction in the above assembly program
+   #+begin_src scala
+     BNE(x6, x2, "loop2"),
+   #+end_src
+   
+   Keep in mind that your design and your implementation are separate entities, thus
+   you should answer this question based on your ideal design, not your finished 
+   implementation.
+   
+*** subquestion 1
+    In your design, what is the value of each of the control signals below?
+    
+    memToReg
+    regWrite
+    memRead
+    memWrite
+    branch
+    jump
+    
+*** subquestion 2
+    In your design, how do you decide wether to take the branch or not?
+   
+
+** Question 3
+   During execution, at some arbitrary cycle the control signals are 
+
+   memToReg = 0
+   regWrite = 1
+   memRead  = 0
+   memWrite = 0
+   branch   = 0
+   jump     = 1
+   
+   In your design, which intruction(s) could be executing?
+   Keep in mind that your design and your implementation are separate entities, thus
+   you should answer this question based on your ideal design, not your finished 
+   implementation.
+   
+** Question 4
+   Draw an RTL sketch of your IF logic.
+   Your sketch should contain
+   + Program counter (PC)
+     + Which signals does the PC consider when updating?
+     + How does the PC select whether to take a branch, a jump or updating?
+   + Instruction memory
+   + IF barrier
+     + Which signals does the IF barrier carry over?
+   
+   Your sketch should be readable, I would highly recommend the use of squared paper 
+   (graph paper) if you choose to sketch this by hand.
+   Taking a cellphone picture of your sketch is acceptable, so long as it is legible.
+   For reference I have added a cellphone picture I have taken of one of my own sketches 
+   to give you an idea of what acceptable drawing quality looks like.
+   
+   Inputs to your sketch should be:
+   + jump ctrl signal 
+   + branch ctrl signal
+   + branch condition met 
+   + branch address
+   + jump address
+
+** Question 5
+   Depending on instruction type, your ALU may use either rs1 or PC for operand
+   1, and either rs2 or immediate for operand 2. How does your design decide
+   which of these should be used?
+
+   You can answer either in text, RTL, or a combination.
+   Your answer should be relatively short.
