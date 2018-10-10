@@ -29,24 +29,57 @@ class Control() extends Module {
   val N = 0.asUInt(1.W)
   val Y = 1.asUInt(1.W)
 
+  val opDC = Op1Select.DC
+  val btDC = branchType.DC
+
   /**
     If you want to you can choose to remove everything that isn't a control signal.
     Another alternative is to just temporarily remove what you don't care about and then add it back afterwards.
     */
   val opcodeMap: Array[(BitPat, List[UInt])] = Array(
 
-    // signal      memToReg, regWrite, memRead, memWrite, branch,  jump, branchType,    Op1Select, Op2Select, ImmSelect,    ALUOp
-    LW     -> List(Y,        Y,        Y,       N,        N,       N,    branchType.DC, rs1,       imm,       ITYPE,        ALUOps.ADD),
+    // signal      m2r, regW, memR, memW, b, j, bType, Op1Sel, Op2Sel, ImmSelect,       ALUOp
+    // Register-register
+    ADD    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.ADD),
+    AND    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.AND),
+    OR     -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.OR),
+    SLL    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SLL),
+    SLT    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SLT),
+    SLTU   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SLTU),
+    SRA    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SRA),
+    SRL    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SRL),
+    SUB    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.SUB),
+    XOR    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    rs2,    ImmFormat.DC,    ALUOps.XOR),
 
-    SW     -> List(N,        N,        N,       Y,        N,       N,    branchType.DC, rs1,       imm,       STYPE,        ALUOps.ADD),
+    // Register-immediate
+    ADDI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
+    ANDI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.AND),
+    AUIPC  -> List(N,   Y,    N,    N,    N, N, btDC,  opDC,   imm,    ImmFormat.UTYPE, ALUOps.ADD),
+    LUI    -> List(N,   Y,    N,    N,    N, N, btDC,  opDC,   imm,    ImmFormat.UTYPE, ALUOps.DC),
+    ORI    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.OR),
+    SLLI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.SHAMT, ALUOps.SLL),
+    SLTI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.SLT),
+    SLTIU  -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.SLTU),
+    SRAI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.SHAMT, ALUOps.SRA),
+    SRLI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.SHAMT, ALUOps.SRL),
+    XORI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.XOR),
 
-    ADD    -> List(N,        Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       ImmFormat.DC, ALUOps.ADD),
-    SUB    -> List(N,        Y,        N,       N,        N,       N,    branchType.DC, rs1,       rs2,       ImmFormat.DC, ALUOps.SUB),
+    // Memory
+    LW     -> List(Y,   Y,    Y,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
+    SW     -> List(N,   N,    N,    Y,    N, N, btDC,  rs1,    imm,    ImmFormat.STYPE, ALUOps.ADD),
 
-    /**
-      Fill in the blanks
-      */
-    )
+    // Jump and link TODO: How to compute both rd and PC?
+    JAL    -> List(N,   Y,    N,    N,    N, Y, jump,  PC,     imm,    ImmFormat.JTYPE, ALUOps.DC),
+    JALR   -> List(N,   Y,    N,    N,    N, Y, jump,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.DC),
+
+    // Branch
+    BEQ    -> List(N,   N,    N,    N,    Y, N, beq,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BGE    -> List(N,   N,    N,    N,    Y, N, gte,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BGEU   -> List(N,   N,    N,    N,    Y, N, gteu,  rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BLT    -> List(N,   N,    N,    N,    Y, N, lt,    rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BLTU   -> List(N,   N,    N,    N,    Y, N, ltu,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BNE    -> List(N,   N,    N,    N,    Y, N, neq,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+  )
 
 
   val NOP = List(N, N, N, N, N, N, branchType.DC, rs1, rs2, ImmFormat.DC, ALUOps.DC)
