@@ -22,4 +22,6 @@ class MemoryFetch() extends Module {
   io.DMEMpeek := DMEM.dataOut
   io.testUpdates := DMEM.testUpdates
 
+  // Make it compile
+  DMEM := DontCare
 }
