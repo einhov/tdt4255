@@ -48,5 +48,9 @@ class CPU extends Module {
 
   /**
     Your signals here
-    */
+   */
+
+  // Make it compile
+  IF.target := 0.U
+  IF.branch := false.B
 }

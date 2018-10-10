@@ -9,9 +9,13 @@ class InstructionFetch extends Module {
         You need to add inputs and outputs here
         A good start is branch/jump address as input, and
         instruction as output.
-        */
+       */
+
+      val target = Input(UInt(32.W))
+      val branch = Input(Bool())
 
       val PC = Output(UInt())
+      val insn = Output(UInt(32.W))
 
       // setup/test
       val IMEMsetup = Input(new IMEMsetupSignals)
@@ -29,5 +33,9 @@ class InstructionFetch extends Module {
 
   /**
     Your code here
-    */
+   */
+  PC := Mux(io.branch, io.target, PC + 4.U)
+
+  // Make it compile
+  io.insn := 0.U
 }
