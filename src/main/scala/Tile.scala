@@ -36,9 +36,8 @@ class Tile() extends Module{
       val checkResult            = Input(Bool())
 
       val currentPC              = Output(UInt())
-      val currentInsn            = Output(new Instruction)
 
-      val IFBarrierSpy           = Output(new IFBarrierSpy)
+      val IFBarrierSpy           = Output(new IFBarrier.Contents)
     })
 
   val CPU = Module(new CPU).io
@@ -69,8 +68,7 @@ class Tile() extends Module{
   io.memDeviceWriteData     := CPU.memUpdates.writeData
 
   io.currentPC := CPU.currentPC
-  io.currentInsn := CPU.currentInsn
-  io.IFBarrierSpy := CPU.IFBarrierSpy
+  io.IFBarrierSpy <> CPU.IFBarrierSpy
   CPU.running := io.running
 }
 

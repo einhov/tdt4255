@@ -3,11 +3,6 @@ package Ov1
 import chisel3._
 import chisel3.core.Input
 
-class IFBarrierSpy extends Bundle {
-  val PC = UInt(32.W)
-  val insn = new Instruction
-}
-
 class CPU extends Module {
 
   val io = IO(
@@ -20,7 +15,10 @@ class CPU extends Module {
       val currentInsn  = Output(new Instruction)
       val running      = Input(Bool())
 
-      val IFBarrierSpy = Output(new IFBarrierSpy)
+      val IFBarrierSpy  = Output(new Ov1.IFBarrier.Contents)
+      val IDBarrierSpy  = Output(new Ov1.IDBarrier.Contents)
+      val EXBarrierSpy  = Output(new Ov1.EXBarrier.Contents)
+      val MEMBarrierSpy = Output(new Ov1.MEMBarrier.Contents)
     }
   )
 
@@ -28,9 +26,9 @@ class CPU extends Module {
     You need to create the classes for these yourself
     */
   val IFBarrier  = Module(new IFBarrier).io
-  // val IDBarrier  = Module(new IDBarrier).io
-  // val EXBarrier  = Module(new EXBarrier).io
-  // val MEMBarrier = Module(new MEMBarrier).io
+  val IDBarrier  = Module(new IDBarrier).io
+  val EXBarrier  = Module(new EXBarrier).io
+  val MEMBarrier = Module(new MEMBarrier).io
 
   val IF  = Module(new InstructionFetch).io
   val ID  = Module(new InstructionDecode).io
@@ -55,14 +53,22 @@ class CPU extends Module {
   io.currentPC  := IF.PC
   io.currentInsn  := IF.insn
 
-  io.IFBarrierSpy.PC := IFBarrier.PC
-  io.IFBarrierSpy.insn := IFBarrier.insn
+  io.IFBarrierSpy <> IFBarrier.out
+  io.IDBarrierSpy <> IDBarrier.out
+  io.EXBarrierSpy <> EXBarrier.out
+  io.MEMBarrierSpy <> MEMBarrier.out
 
   /**
     Your signals here
    */
-  IFBarrier.PC_in := IF.PC
-  IFBarrier.insn_in := IF.insn
+  val IFBarrierWire = Wire(new Ov1.IFBarrier.Contents)
+  IFBarrierWire.PC := IF.PC
+  IFBarrierWire.insn := IF.insn
+
+  IFBarrier.in <> IFBarrierWire
+  IDBarrier.in <> DontCare
+  EXBarrier.in <> DontCare
+  MEMBarrier.in <> DontCare
 
   // Make it compile
   IF.target := 0.U
