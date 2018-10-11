@@ -26,8 +26,6 @@ class InstructionDecode extends Module {
   io.testUpdates  := registers.testUpdates
 
   // Make it compile
-  io.registerPeek := 0.U
-  io.testUpdates := DontCare
 
   registers := DontCare
   control := DontCare

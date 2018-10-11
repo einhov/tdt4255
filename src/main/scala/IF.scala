@@ -15,7 +15,8 @@ class InstructionFetch extends Module {
       val branch = Input(Bool())
 
       val PC = Output(UInt())
-      val insn = Output(UInt(32.W))
+      val insn = Output(new Instruction)
+      val running = Input(Bool())
 
       // setup/test
       val IMEMsetup = Input(new IMEMsetupSignals)
@@ -34,8 +35,14 @@ class InstructionFetch extends Module {
   /**
     Your code here
    */
-  PC := Mux(io.branch, io.target, PC + 4.U)
+  when(io.running) {
+    PC := Mux(io.branch, io.target, PC + 4.U)
+  }
 
-  // Make it compile
-  io.insn := 0.U
+  when(io.IMEMsetup.setup) {
+    PC := 0.U
+  }
+
+  val PC_out = RegNext(PC)
+  io.insn := instruction
 }

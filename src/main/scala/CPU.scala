@@ -3,6 +3,10 @@ package Ov1
 import chisel3._
 import chisel3.core.Input
 
+class IFBarrierSpy extends Bundle {
+  val PC = UInt(32.W)
+  val insn = new Instruction
+}
 
 class CPU extends Module {
 
@@ -13,13 +17,17 @@ class CPU extends Module {
       val regUpdates   = Output(new RegisterUpdates)
       val memUpdates   = Output(new MemUpdates)
       val currentPC    = Output(UInt(32.W))
+      val currentInsn  = Output(new Instruction)
+      val running      = Input(Bool())
+
+      val IFBarrierSpy = Output(new IFBarrierSpy)
     }
   )
 
   /**
     You need to create the classes for these yourself
     */
-  // val IFBarrier  = Module(new IFBarrier).io
+  val IFBarrier  = Module(new IFBarrier).io
   // val IDBarrier  = Module(new IDBarrier).io
   // val EXBarrier  = Module(new EXBarrier).io
   // val MEMBarrier = Module(new MEMBarrier).io
@@ -45,12 +53,19 @@ class CPU extends Module {
   io.regUpdates := ID.testUpdates
   io.memUpdates := MEM.testUpdates
   io.currentPC  := IF.PC
+  io.currentInsn  := IF.insn
+
+  io.IFBarrierSpy.PC := IFBarrier.PC
+  io.IFBarrierSpy.insn := IFBarrier.insn
 
   /**
     Your signals here
    */
+  IFBarrier.PC_in := IF.PC
+  IFBarrier.insn_in := IF.insn
 
   // Make it compile
   IF.target := 0.U
   IF.branch := false.B
+  IF.running := io.running
 }
