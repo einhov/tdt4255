@@ -25,11 +25,17 @@ object RISCVasm {
       JALR(rd, rs1, Right(imm))
   }
 
-  case class JAL(rd: Reg, imm: String) extends asmOP
+  case class JAL(rd: Reg, imm: Either[String, Imm]) extends asmOP
+  object JAL {
+    def apply(rd: Reg, imm: String): JAL =
+      JAL(rd, Left(imm))
+    def apply(rd: Reg, imm: Imm): JAL =
+      JAL(rd, Right(imm))
+  }
 
   case class JR(rs1: Reg) extends asmOP
   case class LI(rd: Reg, imm: Imm) extends asmOP
-  case class J(imm: Imm) extends asmOP
+  case class J(imm: String) extends asmOP
 
   case class ADD(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
   case class SUB(rd: Reg, rs1: Reg, rs2: Reg) extends asmOP
@@ -78,7 +84,10 @@ object RISCVasm {
       case Right(i) => RISCVOPS.JALR(rd, rs1, i.toInt)
       case Left(s)  => RISCVOPS.JALR(rd, rs1, (labels(s) - address).toInt)
     }
-    case JAL(rd, imm)         => RISCVOPS.JAL(rd,       (labels(imm) - address).toInt)
+    case JAL(rd, imm)         => imm match {
+      case Right(i) => RISCVOPS.JAL(rd,       i.toInt)
+      case Left(s) => RISCVOPS.JAL(rd,       (labels(s) - address).toInt)
+    }
 
     case ADD(rd, rs1, rs2)    => RISCVOPS.ADD(rd, rs1, rs2)
     case SUB(rd, rs1, rs2)    => RISCVOPS.SUB(rd, rs1, rs2)
@@ -108,7 +117,7 @@ object RISCVasm {
     case JR(rs1)              => RISCVOPS.JALR(0, rs1, 0)
     case LI(rd, imm)          => RISCVOPS.ADDI(rd, 0, imm)
     case MOV(rd, rs1)         => RISCVOPS.ADD(rd, 0, rs1)
-    case J(imm)               => RISCVOPS.JAL(0, imm)
+    case J(imm)               => toRealOP(JAL(0, imm), labels, address)
     case NOP                  => RISCVOPS.NOP
     case DONE                 => RISCVOPS.DONE
     case _ => RISCVOPS.NOP
@@ -211,5 +220,4 @@ object regNames {
 
   val t5   = 30
   val t6   = 31
-
 }

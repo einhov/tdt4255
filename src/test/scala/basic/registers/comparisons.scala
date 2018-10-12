@@ -32,6 +32,18 @@ class RegisterComparisonTests extends FlatSpec with Matchers {
     x16 -> Uint(0x7FFFFFFE),
     x17 -> Uint(0x7FFFFFFF),
     x18 -> Uint(0x7FFFFFAA),
+
+    x21 -> Uint(0),
+    x22 -> Uint(0),
+    x23 -> Uint(0),
+    x24 -> Uint(0),
+    x25 -> Uint(0),
+    x26 -> Uint(0),
+    x27 -> Uint(0),
+    x28 -> Uint(0),
+    x29 -> Uint(0),
+    x30 -> Uint(0),
+    x31 -> Uint(0),
     )
 
   val initMem = Map[Addr, Word]()

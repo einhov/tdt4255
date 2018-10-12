@@ -58,6 +58,7 @@ class JumpTests extends FlatSpec with Matchers {
 
 
       LABEL("j6"),
+      NOP,
       DONE
     )
 
@@ -93,6 +94,7 @@ class JumpTests extends FlatSpec with Matchers {
       JAL(x1, "jump hell"),
 
       LABEL("done"),
+      NOP,
       DONE
     )
 

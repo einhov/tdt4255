@@ -40,6 +40,7 @@ class BranchTests extends FlatSpec with Matchers {
       ADD(x2, x2, x2),
       SLT(x1, x2, x5),
       BNE(x0, x1, "loop"),
+      NOP,
       DONE
     )
 
@@ -60,6 +61,7 @@ class BranchTests extends FlatSpec with Matchers {
       SLTI(x4, x3, 0xFF),
       XORI(x5, x4, 0x1),
       BEQ(x0, x5, "loop"),
+      NOP,
       DONE
     )
 
@@ -84,7 +86,7 @@ class BranchTests extends FlatSpec with Matchers {
       LABEL("loop2"),
       ADDI(x8, x8, -5),
       BGE(x8, x12, "loop2"),
-
+      NOP,
       DONE
     )
 
@@ -110,6 +112,7 @@ class BranchTests extends FlatSpec with Matchers {
       ADDI(x8, x8, -5),
       BLT(x12, x8, "loop2"),
 
+      NOP,
       DONE
     )
 
