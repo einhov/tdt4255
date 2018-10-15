@@ -76,8 +76,8 @@ scalacOptions ++= Seq("-language:reflectiveCalls")
 
 javacOptions ++= javacOptionsVersion(scalaVersion.value)
 
-testOptions in Test += Tests.Argument("-oF")
-
 resolvers += Resolver.sonatypeRepo("releases")
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
+
+testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-f", "result.txt", "-fS", "/dev/null")
