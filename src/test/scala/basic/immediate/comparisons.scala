@@ -32,6 +32,18 @@ class ImmidiateComparisonsTests extends FlatSpec with Matchers {
     x17 -> Uint(0x7FFFFFFF),
     x18 -> Uint(0x7FFFFFAA),
 
+    x21 -> Uint(0xFFFFFFFF),
+    x22 -> Uint(0xFFFFFFCE),
+    x23 -> Uint(0xFFFFFFAA),
+    x24 -> Uint(0xFFFFFE),
+    x25 -> Uint(0x8FFFFFFE),
+    x26 -> Uint(0x7FFFFFFE),
+    x27 -> Uint(0x7FFFFFFF),
+    x28 -> Uint(0x7FFFFFAA),
+    
+    x29 -> Uint(0x7FFFFFFE),
+    x30 -> Uint(0x7FFFFFFF),
+    x31 -> Uint(0x7FFFFFAA)
     )
 
   val initMem = Map[Addr, Word]()
