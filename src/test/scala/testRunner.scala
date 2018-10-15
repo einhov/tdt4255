@@ -50,7 +50,7 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       }
       else {
         val regWriteAddress         = d.peek(d.dut.io.regsDeviceWriteAddress)
-        val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected was ${expected.head._2.toBigInt}"
+        val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected address was ${expected.head._1.toBigInt}"
         val regWriteData            = d.peek(d.dut.io.regsDeviceWriteData)
         val regWriteDataErrorMsg    = s"Attempted to write wrong data to address $regWriteAddress. Written was ${regWriteData}, Expected data was ${expected.head._2.toBigInt}"
 
