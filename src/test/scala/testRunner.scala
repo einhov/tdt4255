@@ -28,9 +28,9 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       }
       else {
         val memWriteAddress         = d.peek(d.dut.io.memDeviceWriteAddress)
-        val memWriteAddressErrorMsg = s"Attempted to write to address $memWriteAddress. Expected was ${expected.head._1.toBigInt}"
+        val memWriteAddressErrorMsg = s"Attempted to write to address $memWriteAddress. Expected was ${expected.head._2.toBigInt}"
         val memWriteData            = d.peek(d.dut.io.memDeviceWriteData)
-        val memWriteDataErrorMsg    = s"Attempted to write wrong data to address $memWriteAddress. Written was ${memWriteData}, Expected data was ${expected.head._1.toBigInt}"
+        val memWriteDataErrorMsg    = s"Attempted to write wrong data to address $memWriteAddress. Written was ${memWriteData}, Expected data was ${expected.head._2.toBigInt}"
 
         d.expect(d.dut.io.memDeviceWriteAddress, expected.head._1.toBigInt, memWriteAddressErrorMsg)
         d.expect(d.dut.io.memDeviceWriteData, expected.head._2.toBigInt, memWriteDataErrorMsg)
@@ -50,9 +50,9 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       }
       else {
         val regWriteAddress         = d.peek(d.dut.io.regsDeviceWriteAddress)
-        val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected was ${expected.head._1.toBigInt}"
+        val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected was ${expected.head._2.toBigInt}"
         val regWriteData            = d.peek(d.dut.io.regsDeviceWriteData)
-        val regWriteDataErrorMsg    = s"Attempted to write wrong data to address $regWriteAddress. Written was ${regWriteData}, Expected data was ${expected.head._1.toBigInt}"
+        val regWriteDataErrorMsg    = s"Attempted to write wrong data to address $regWriteAddress. Written was ${regWriteData}, Expected data was ${expected.head._2.toBigInt}"
 
         // writes to x0 are not recorded
         if(Uint(regWriteAddress.toInt) == Uint(0))
