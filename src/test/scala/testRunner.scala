@@ -46,8 +46,11 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
 
     if(d.peek(d.dut.io.regsDeviceWriteEnable) == 1){
       val regWriteAddress = d.peek(d.dut.io.regsDeviceWriteAddress)
-      if((expected.isEmpty) && !(Uint(regWriteAddress.toInt) == Uint(0))) {
-        Left("Unexpected register write. (Emulator recorded less writes than your design)")
+      if((expected.isEmpty)) {
+        if(!(Uint(regWriteAddress.toInt) == Uint(0))) {
+          Left("Unexpected register write. (Emulator recorded less writes than your design)")
+        }
+        Right(expected)
       }
       else {
         val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected address was ${expected.head._1.toBigInt}"
