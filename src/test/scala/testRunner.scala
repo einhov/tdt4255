@@ -45,11 +45,11 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
                      expected: List[(Reg, Word)]): Either[String, List[(Reg, Word)]] = {
 
     if(d.peek(d.dut.io.regsDeviceWriteEnable) == 1){
-      if(expected.isEmpty) {
+      val regWriteAddress = d.peek(d.dut.io.regsDeviceWriteAddress)
+      if((expected.isEmpty) && !(Uint(regWriteAddress.toInt) == Uint(0))) {
         Left("Unexpected register write. (Emulator recorded less writes than your design)")
       }
       else {
-        val regWriteAddress         = d.peek(d.dut.io.regsDeviceWriteAddress)
         val regWriteAddressErrorMsg = s"Attempted to write to address $regWriteAddress. Expected address was ${expected.head._1.toBigInt}"
         val regWriteData            = d.peek(d.dut.io.regsDeviceWriteData)
         val regWriteDataErrorMsg    = s"Attempted to write wrong data to address $regWriteAddress. Written was ${regWriteData}, Expected data was ${expected.head._2.toBigInt}"
