@@ -35,7 +35,7 @@ class ProgramCounterTest extends FlatSpec with Matchers {
     )
 
 
-  it should "perform multiple calls to a function to square a number" in {
+  it should "handle AUIPC and LUI" in {
 
     val program = List(
 
