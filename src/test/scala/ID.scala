@@ -56,11 +56,11 @@ class ID extends FlatSpec with Matchers {
     )
     val ops = Array(
       0,
-      15,
+      0,
       15, 15,
       15, 15,
       0, 0,
-      15, 15,
+      0, 0,
       15,
       8,
       15, 15

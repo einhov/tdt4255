@@ -74,8 +74,8 @@ class InstructionDecode extends Module {
   io.out.controlSignals := control.controlSignals
   io.out.branchType := control.branchType
   io.out.ALUop := control.ALUop
-  io.out.rs1 := Mux(!control.op1Select, registers.readData1, 0.U)
-  io.out.rs2 := Mux(!control.op2Select, registers.readData2, 0.U)
+  io.out.rs1 := registers.readData1
+  io.out.rs2 := registers.readData2
   io.out.op1Sel := control.op1Select
   io.out.op2Sel := control.op2Select
   io.out.rd := insn_bits(11, 7)

@@ -73,12 +73,12 @@ class Control() extends Module {
     JALR   -> List(N,   Y,    N,    N,    N, Y, jump,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
 
     // Branch
-    BEQ    -> List(N,   N,    N,    N,    Y, N, beq,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
-    BGE    -> List(N,   N,    N,    N,    Y, N, gte,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
-    BGEU   -> List(N,   N,    N,    N,    Y, N, gteu,  rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
-    BLT    -> List(N,   N,    N,    N,    Y, N, lt,    rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
-    BLTU   -> List(N,   N,    N,    N,    Y, N, ltu,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
-    BNE    -> List(N,   N,    N,    N,    Y, N, neq,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
+    BEQ    -> List(N,   N,    N,    N,    Y, N, beq,   PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
+    BGE    -> List(N,   N,    N,    N,    Y, N, gte,   PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
+    BGEU   -> List(N,   N,    N,    N,    Y, N, gteu,  PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
+    BLT    -> List(N,   N,    N,    N,    Y, N, lt,    PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
+    BLTU   -> List(N,   N,    N,    N,    Y, N, ltu,   PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
+    BNE    -> List(N,   N,    N,    N,    Y, N, neq,   PC,     imm,    ImmFormat.BTYPE, ALUOps.ADD),
   )
 
 

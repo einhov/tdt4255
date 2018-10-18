@@ -20,7 +20,9 @@ class EX extends FlatSpec with Matchers {
       ADDI(2, 1, -255),
       AND(2, 0x15, 0x4),
       XOR(2, 0x15, 0x14),
-      JAL(0, "loop"),
+//      JAL(0, "loop"),
+      BGE(3, 1, "loop"),
+      BEQ(1, 1, "loop"),
       DONE
     )
 
@@ -29,7 +31,7 @@ class EX extends FlatSpec with Matchers {
       -254,
       0x4,
       1,
-      104,
+      0, 0,
       0, 0
     )
 
