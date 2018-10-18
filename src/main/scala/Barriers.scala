@@ -61,6 +61,9 @@ object EXBarrier {
     val rd = UInt(5.W)
     val wb = Bool()
     val data = UInt(32.W)
+
+    val branch = Bool()
+    val target = UInt(32.W)
   }
 }
 

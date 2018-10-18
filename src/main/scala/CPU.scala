@@ -69,8 +69,8 @@ class CPU extends Module {
   io.EXBarrierSpy <> EXBarrier.out
   io.MEMBarrierSpy <> MEMBarrier.out
 
-  // Make it compile
-  IF.target := EX.target
-  IF.branch := EX.branch
+  // Branching
+  IF.branch := EXBarrier.out.branch
+  IF.target := EXBarrier.out.target
   IF.running := io.running
 }

@@ -7,9 +7,6 @@ class Execute extends Module {
     new Bundle {
       val in = Input(new IDBarrier.Contents)
       val out = Output(new EXBarrier.Contents)
-
-      val target = Output(UInt(32.W))
-      val branch = Output(Bool())
     }
   )
 
@@ -35,8 +32,8 @@ class Execute extends Module {
   io.out.data := aluResult
 
   when(io.in.controlSignals.jump) {
-    io.branch := true.B
-    io.target := aluResult & (0.U(32.W) - 2.U)
+    io.out.branch := true.B
+    io.out.target := aluResult & (0.U(32.W) - 2.U)
     io.out.data := io.in.PC + 4.U
   } .elsewhen(io.in.controlSignals.branch) {
     val take_branch = WireInit(false.B)
@@ -52,12 +49,12 @@ class Execute extends Module {
       is(branchType.ltu ) { take_branch := rs1  <   rs2  }
       is(branchType.neq ) { take_branch := rs1  =/= rs2  }
     }
-    io.branch := take_branch
-    io.target := aluResult
+    io.out.branch := take_branch
+    io.out.target := aluResult
     io.out.data := 0.U
   } .otherwise {
-    io.branch := false.B
-    io.target := 0.U
+    io.out.branch := false.B
+    io.out.target := 0.U
   }
 
   io.out.address := io.in.immediate
