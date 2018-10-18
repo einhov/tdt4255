@@ -79,6 +79,4 @@ class CPU extends Module {
   // Branching
   IF.branch := EXBarrier.out.branch
   IF.target := EXBarrier.out.target
-
-  IF.running := io.running
 }

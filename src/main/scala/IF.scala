@@ -14,7 +14,6 @@ class InstructionFetch extends Module {
       val target = Input(UInt(32.W))
       val branch = Input(Bool())
 
-      val running = Input(Bool())
       val out = Output(new IFBarrier.Contents)
 
       // setup/test
@@ -34,9 +33,7 @@ class InstructionFetch extends Module {
   /**
     Your code here
    */
-  when(io.running) {
-    PC := Mux(io.branch, io.target, PC + 4.U)
-  }
+  PC := Mux(io.branch, io.target, PC + 4.U)
 
   when(io.IMEMsetup.setup) {
     PC := 0.U
