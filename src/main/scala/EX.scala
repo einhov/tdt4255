@@ -15,7 +15,6 @@ class Execute extends Module {
   val op1s = op1.asSInt
   val op2s = op2.asSInt
 
-  io.out.data := 0.U
   val aluResult = WireInit(0.U(32.W))
   switch(io.in.ALUop) {
     is(ALUOps.ADD)    { aluResult := op1 + op2 }
@@ -61,6 +60,7 @@ class Execute extends Module {
   io.out.address := aluResult
   io.out.read := io.in.controlSignals.memRead
   io.out.write := io.in.controlSignals.memWrite
+  io.out.write_data := io.in.rs2
   io.out.wb := io.in.controlSignals.regWrite
   io.out.rd := io.in.rd
 

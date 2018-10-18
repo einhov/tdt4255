@@ -34,6 +34,7 @@ class CPU extends Module {
   val ID  = Module(new InstructionDecode).io
   val EX  = Module(new Execute).io
   val MEM = Module(new MemoryFetch).io
+  val WB  = Module(new WriteBack).io
 
   /**
     setup stuff
@@ -64,7 +65,11 @@ class CPU extends Module {
   ID.in <> IFBarrier.out
   EX.in <> IDBarrier.out
   MEM.in <> EXBarrier.out
-  ID.wb <> MEMBarrier.out
+  WB.in <> MEMBarrier.out
+
+  ID.wb := WB.wb
+  ID.data := WB.data
+  ID.rd := WB.rd
 
   io.IFBarrierSpy <> IFBarrier.out
   io.IDBarrierSpy <> IDBarrier.out
@@ -74,5 +79,6 @@ class CPU extends Module {
   // Branching
   IF.branch := EXBarrier.out.branch
   IF.target := EXBarrier.out.target
+
   IF.running := io.running
 }

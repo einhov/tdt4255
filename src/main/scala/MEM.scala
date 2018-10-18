@@ -23,12 +23,16 @@ class MemoryFetch() extends Module {
   io.DMEMpeek := DMEM.dataOut
   io.testUpdates := DMEM.testUpdates
 
-  DMEM.dataIn := io.in.data
+  DMEM.dataIn := io.in.write_data
   DMEM.dataAddress := io.in.address
   DMEM.writeEnable := io.in.write
   val readData = DMEM.dataOut
 
-  io.out.wb := io.in.wb
-  io.out.data := Mux(io.in.read, readData, io.in.data)
   io.out.rd := io.in.rd
+  io.out.wb := io.in.wb
+  io.out.register_data := io.in.data
+  io.out.memory_data := readData
+  io.out.dataIsFromMem := io.in.read
+
+  io.out.PC := io.in.PC
 }

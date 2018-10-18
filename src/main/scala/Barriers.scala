@@ -57,6 +57,7 @@ object EXBarrier {
     val address = UInt(32.W)
     val read = Bool()
     val write = Bool()
+    val write_data = UInt(32.W)
 
     val rd = UInt(5.W)
     val wb = Bool()
@@ -82,9 +83,12 @@ class EXBarrier extends Module {
 
 object MEMBarrier {
   class Contents extends Bundle {
+    val PC = UInt(32.W)
     val rd = UInt(5.W)
     val wb = Bool()
-    val data = UInt(32.W)
+    val register_data = UInt(32.W)
+    val memory_data = UInt(32.W)
+    val dataIsFromMem = Bool()
   }
 }
 
@@ -99,4 +103,5 @@ class MEMBarrier extends Module {
   val contents = Reg(new MEMBarrier.Contents)
   contents <> io.in
   io.out <> contents
+  io.out.memory_data := io.in.memory_data
 }
