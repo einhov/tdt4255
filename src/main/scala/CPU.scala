@@ -53,11 +53,6 @@ class CPU extends Module {
   io.currentPC  := IF.PC
   io.currentInsn  := IF.insn
 
-  io.IFBarrierSpy <> IFBarrier.out
-  io.IDBarrierSpy <> IDBarrier.out
-  io.EXBarrierSpy <> EXBarrier.out
-  io.MEMBarrierSpy <> MEMBarrier.out
-
   /**
     Your signals here
    */
@@ -66,9 +61,16 @@ class CPU extends Module {
   IFBarrierWire.insn := IF.insn
 
   IFBarrier.in <> IFBarrierWire
-  IDBarrier.in <> DontCare
+  IDBarrier.in <> ID.out
   EXBarrier.in <> DontCare
   MEMBarrier.in <> DontCare
+
+  ID.in <> IFBarrier.out
+
+  io.IFBarrierSpy <> IFBarrier.out
+  io.IDBarrierSpy <> IDBarrier.out
+  io.EXBarrierSpy <> EXBarrier.out
+  io.MEMBarrierSpy <> MEMBarrier.out
 
   // Make it compile
   IF.target := 0.U

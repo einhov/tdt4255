@@ -38,6 +38,7 @@ class Tile() extends Module{
       val currentPC              = Output(UInt())
 
       val IFBarrierSpy           = Output(new IFBarrier.Contents)
+      val IDBarrierSpy           = Output(new IDBarrier.Contents)
     })
 
   val CPU = Module(new CPU).io
@@ -69,6 +70,7 @@ class Tile() extends Module{
 
   io.currentPC := CPU.currentPC
   io.IFBarrierSpy <> CPU.IFBarrierSpy
+  io.IDBarrierSpy <> CPU.IDBarrierSpy
   CPU.running := io.running
 }
 

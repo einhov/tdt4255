@@ -28,8 +28,10 @@ object IDBarrier {
     val PC = UInt(32.W)
     val controlSignals = new ControlSignals
     val branchType = UInt(3.W)
-    val op1 = UInt(32.W)
-    val op2 = UInt(32.W)
+    val rs1 = UInt(32.W)
+    val rs2 = UInt(32.W)
+    val immediate = UInt(32.W)
+    val rd = UInt(5.W)
     val ALUop = UInt(4.W)
   }
 }
