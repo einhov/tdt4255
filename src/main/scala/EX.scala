@@ -18,16 +18,17 @@ class Execute extends Module {
   io.out.data := 0.U
   val aluResult = WireInit(0.U(32.W))
   switch(io.in.ALUop) {
-    is(ALUOps.ADD) { aluResult := op1 + op2 }
-    is(ALUOps.SUB) { aluResult := op1 - op2 }
-    is(ALUOps.AND) { aluResult := op1 & op2 }
-    is(ALUOps.OR)  { aluResult := op1 | op2 }
-    is(ALUOps.XOR) { aluResult := op1 ^ op2 }
-    is(ALUOps.SLT) { aluResult := op1s < op2s }
-    is(ALUOps.SLTU){ aluResult := op1 < op2 }
-    is(ALUOps.SLL) { aluResult := op1 << op2(4, 0) }
-    is(ALUOps.SRL) { aluResult := op1 >> op2(4, 0) }
-    is(ALUOps.SRA) { aluResult := (op1s >> op2(4, 0)).asUInt }
+    is(ALUOps.ADD)    { aluResult := op1 + op2 }
+    is(ALUOps.SUB)    { aluResult := op1 - op2 }
+    is(ALUOps.AND)    { aluResult := op1 & op2 }
+    is(ALUOps.OR)     { aluResult := op1 | op2 }
+    is(ALUOps.XOR)    { aluResult := op1 ^ op2 }
+    is(ALUOps.SLT)    { aluResult := op1s < op2s }
+    is(ALUOps.SLTU)   { aluResult := op1 < op2 }
+    is(ALUOps.SLL)    { aluResult := op1 << op2(4, 0) }
+    is(ALUOps.SRL)    { aluResult := op1 >> op2(4, 0) }
+    is(ALUOps.SRA)    { aluResult := (op1s >> op2(4, 0)).asUInt }
+    is(ALUOps.COPY_B) { aluResult := op2 }
   }
   io.out.data := aluResult
 

@@ -54,8 +54,8 @@ class Control() extends Module {
     // Register-immediate
     ADDI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
     ANDI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.AND),
-    AUIPC  -> List(N,   Y,    N,    N,    N, N, btDC,  opDC,   imm,    ImmFormat.UTYPE, ALUOps.ADD),
-    LUI    -> List(N,   Y,    N,    N,    N, N, btDC,  opDC,   imm,    ImmFormat.UTYPE, ALUOps.DC),
+    AUIPC  -> List(N,   Y,    N,    N,    N, N, btDC,  PC,     imm,    ImmFormat.UTYPE, ALUOps.ADD),
+    LUI    -> List(N,   Y,    N,    N,    N, N, btDC,  opDC,   imm,    ImmFormat.UTYPE, ALUOps.COPY_B),
     ORI    -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.OR),
     SLLI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.SHAMT, ALUOps.SLL),
     SLTI   -> List(N,   Y,    N,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.SLT),
