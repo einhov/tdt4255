@@ -336,7 +336,7 @@ object RISCVOPS {
     }
 
     case JAL(rd, imm) => m => {
-      val next = MachineState(m.mem, m.regs.updatedR(rd, m.pc + Uint(4)), Uint((m.pc.toInt + imm) & 0xFFFFFFFE))
+      val next = MachineState(m.mem, m.regs.updatedR(rd, m.pc + Uint(4)), Uint((m.pc.toInt + imm)))
       Right((next, StateUpdate.logReg(rd, next)))
     }
 

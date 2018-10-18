@@ -197,3 +197,8 @@
     Until then you should write your own tests.
     To do this you can just use the same template as simpleLoop.scala employs.
     A list of instructions can be found in RISCVOPS.scala.
+
+** Evaluation criteria
+   Your score on this exercise is calculated solely based on the number of tests that pass.
+   This means you can score a lot of points on basic arithmetic etc, but these "freebies"
+   will be harder to get in ex2, so do yourself a favor and go for a full score.

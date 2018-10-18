@@ -64,6 +64,8 @@ object RISCVutils {
 
 
   case class MachineState(mem: Map[Uint, Uint], regs: Map[Int, Uint], pc: Uint){
+
+
     def updateMem(addr: Addr, word: Word): Option[MachineState] =
       mem.lift(addr).map{ _ =>
         copy(mem = mem.updated(addr, word), pc = pc + Uint(4))
@@ -80,8 +82,17 @@ object RISCVutils {
       mem.lift(addr)
   }
   object MachineState {
-    def apply(mem: Map[Uint, Uint], regs: Map[Int, Uint]): MachineState =
-      MachineState(mem, regs, Uint(0))
+    def apply(mem: Map[Uint, Uint], regs: Map[Int, Uint]): MachineState = {
+
+      val regz = (0 to 31).foldLeft(regs){ case(regMap, idx) =>
+        if (regMap.keys.exists(idx == _))
+          regMap
+        else
+          regMap.updated(idx, Uint(0))
+      }
+
+      MachineState(mem, regz, Uint(0))
+    }
 
     def randomizedRegs: MachineState = {
       val regs = List.range(1, 31).map((_, Uint(scala.util.Random.nextInt(1000)))).toMap
