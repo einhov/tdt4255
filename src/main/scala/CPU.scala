@@ -32,7 +32,7 @@ class CPU extends Module {
 
   val IF  = Module(new InstructionFetch).io
   val ID  = Module(new InstructionDecode).io
-  // val EX  = Module(new Execute).io
+  val EX  = Module(new Execute).io
   val MEM = Module(new MemoryFetch).io
 
   /**
@@ -50,22 +50,19 @@ class CPU extends Module {
     */
   io.regUpdates := ID.testUpdates
   io.memUpdates := MEM.testUpdates
-  io.currentPC  := IF.PC
-  io.currentInsn  := IF.insn
+  io.currentPC  := IF.out.PC
+  io.currentInsn  := IF.out.insn
 
   /**
     Your signals here
    */
-  val IFBarrierWire = Wire(new Ov1.IFBarrier.Contents)
-  IFBarrierWire.PC := IF.PC
-  IFBarrierWire.insn := IF.insn
-
-  IFBarrier.in <> IFBarrierWire
+  IFBarrier.in <> IF.out
   IDBarrier.in <> ID.out
-  EXBarrier.in <> DontCare
+  EXBarrier.in <> EX.out
   MEMBarrier.in <> DontCare
 
   ID.in <> IFBarrier.out
+  EX.in <> IDBarrier.out
 
   io.IFBarrierSpy <> IFBarrier.out
   io.IDBarrierSpy <> IDBarrier.out
@@ -73,7 +70,7 @@ class CPU extends Module {
   io.MEMBarrierSpy <> MEMBarrier.out
 
   // Make it compile
-  IF.target := 0.U
-  IF.branch := false.B
+  IF.target := EX.target
+  IF.branch := EX.branch
   IF.running := io.running
 }

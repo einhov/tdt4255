@@ -30,6 +30,8 @@ object IDBarrier {
     val branchType = UInt(3.W)
     val rs1 = UInt(32.W)
     val rs2 = UInt(32.W)
+    val op1Sel = UInt(1.W)
+    val op2Sel = UInt(1.W)
     val immediate = UInt(32.W)
     val rd = UInt(5.W)
     val ALUop = UInt(4.W)
@@ -52,6 +54,13 @@ class IDBarrier extends Module {
 object EXBarrier {
   class Contents extends Bundle {
     val PC = UInt(32.W)
+    val address = UInt(32.W)
+    val read = Bool()
+    val write = Bool()
+
+    val rd = UInt(5.W)
+    val wb = Bool()
+    val data = UInt(32.W)
   }
 }
 

@@ -14,19 +14,18 @@ class InstructionFetch extends Module {
       val target = Input(UInt(32.W))
       val branch = Input(Bool())
 
-      val PC = Output(UInt())
-      val insn = Output(new Instruction)
       val running = Input(Bool())
+      val out = Output(new IFBarrier.Contents)
 
       // setup/test
       val IMEMsetup = Input(new IMEMsetupSignals)
+      val PC = Output(UInt(32.W))
     })
 
   // Setup
   val IMEM = Module(new IMEM).io
   val PC = RegInit(UInt(32.W), 0.U)
   IMEM.setup := io.IMEMsetup
-  io.PC := PC
 
   IMEM.instructionAddress := PC
   val instruction = Wire(new Instruction)
@@ -44,5 +43,7 @@ class InstructionFetch extends Module {
   }
 
   val PC_out = RegNext(PC)
-  io.insn := instruction
+  io.PC := PC
+  io.out.PC := PC
+  io.out.insn := instruction
 }

@@ -68,9 +68,9 @@ class Control() extends Module {
     LW     -> List(Y,   Y,    Y,    N,    N, N, btDC,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
     SW     -> List(N,   N,    N,    Y,    N, N, btDC,  rs1,    imm,    ImmFormat.STYPE, ALUOps.ADD),
 
-    // Jump and link TODO: How to compute both rd and PC?
-    JAL    -> List(N,   Y,    N,    N,    N, Y, jump,  PC,     imm,    ImmFormat.JTYPE, ALUOps.DC),
-    JALR   -> List(N,   Y,    N,    N,    N, Y, jump,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.DC),
+    // Jump and link
+    JAL    -> List(N,   Y,    N,    N,    N, Y, jump,  PC,     imm,    ImmFormat.JTYPE, ALUOps.ADD),
+    JALR   -> List(N,   Y,    N,    N,    N, Y, jump,  rs1,    imm,    ImmFormat.ITYPE, ALUOps.ADD),
 
     // Branch
     BEQ    -> List(N,   N,    N,    N,    Y, N, beq,   rs1,    rs2,    ImmFormat.BTYPE, ALUOps.DC),
