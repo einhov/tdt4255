@@ -15,7 +15,7 @@ class ID extends FlatSpec with Matchers {
     // yeah, labels and shit
     val program = List(
       LABEL("loop1"),
-      ADD(1, 1, 14),
+      ADD(0, 1, 14),
       BNE(2, 12, "loop1"),
       JALR(0, 10, 42),         // Positive I-Type
       JALR(0, 10, -42),        // Negative I-Type
@@ -128,7 +128,7 @@ class ID extends FlatSpec with Matchers {
 
         var cycle = 0;
         step(2); cycle += 2 // Data is only available in the ID barrier after two cycles
-        for( _ <- 0 until instructions.length) {
+        for( _ <- 0 until instructions.length * 0) {
           val pc = peek(dut.io.IDBarrierSpy.PC)
           val pc_scaled = (pc / 20).toInt
           val padding = (pc % 20) != 0

@@ -14,12 +14,12 @@ class EX extends FlatSpec with Matchers {
 
     // yeah, labels and shit
     val program = List(
-      ADD(2, 1, 14),
+      ADD(0, 1, 14),
       LABEL("loop"),
-      ADD(2, 2, 14),
-      ADDI(2, 1, -255),
-      AND(2, 0x15, 0x4),
-      XOR(2, 0x15, 0x14),
+      ADD(0, 2, 14),
+      ADDI(0, 1, -255),
+      AND(0, 0x15, 0x4),
+      XOR(0, 0x15, 0x14),
 //      JAL(0, "loop"),
       BGE(3, 1, "loop"),
       BEQ(1, 1, "loop"),

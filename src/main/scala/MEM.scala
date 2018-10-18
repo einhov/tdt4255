@@ -6,7 +6,8 @@ import chisel3.util._
 class MemoryFetch() extends Module {
   val io = IO(
     new Bundle {
-
+      val in = Input(new EXBarrier.Contents)
+      val out = Output(new MEMBarrier.Contents)
 
       // setup/test
       val DMEMsetup      = Input(new DMEMsetupSignals)
@@ -22,6 +23,12 @@ class MemoryFetch() extends Module {
   io.DMEMpeek := DMEM.dataOut
   io.testUpdates := DMEM.testUpdates
 
-  // Make it compile
-  DMEM := DontCare
+  DMEM.dataIn := io.in.data
+  DMEM.dataAddress := io.in.address
+  DMEM.writeEnable := io.in.write
+  val readData = DMEM.dataOut
+
+  io.out.wb := io.in.wb
+  io.out.data := Mux(io.in.read, readData, io.in.data)
+  io.out.rd := io.in.rd
 }

@@ -57,7 +57,7 @@ class Execute extends Module {
     io.out.target := 0.U
   }
 
-  io.out.address := io.in.immediate
+  io.out.address := aluResult
   io.out.read := io.in.controlSignals.memRead
   io.out.write := io.in.controlSignals.memWrite
   io.out.wb := io.in.controlSignals.regWrite

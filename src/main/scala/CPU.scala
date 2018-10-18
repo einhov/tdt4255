@@ -59,10 +59,12 @@ class CPU extends Module {
   IFBarrier.in <> IF.out
   IDBarrier.in <> ID.out
   EXBarrier.in <> EX.out
-  MEMBarrier.in <> DontCare
+  MEMBarrier.in <> MEM.out
 
   ID.in <> IFBarrier.out
   EX.in <> IDBarrier.out
+  MEM.in <> EXBarrier.out
+  ID.wb <> MEMBarrier.out
 
   io.IFBarrierSpy <> IFBarrier.out
   io.IDBarrierSpy <> IDBarrier.out

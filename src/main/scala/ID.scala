@@ -9,6 +9,7 @@ class InstructionDecode extends Module {
     new Bundle {
       val in = Input(new IFBarrier.Contents)
       val out = Output(new IDBarrier.Contents)
+      val wb = Input(new MEMBarrier.Contents)
 
       // setup/test
       val registerSetup     = Input(new RegisterSetupSignals)
@@ -26,9 +27,9 @@ class InstructionDecode extends Module {
   io.testUpdates  := registers.testUpdates
 
   // Make it compile
-  registers.writeEnable := false.B
-  registers.writeData := 0.U
-  registers.writeAddress := 0.U
+  registers.writeEnable := io.wb.wb
+  registers.writeData := io.wb.data
+  registers.writeAddress := io.wb.rd
 
   control.instruction := io.in.insn
 

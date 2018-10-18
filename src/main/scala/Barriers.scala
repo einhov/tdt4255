@@ -82,7 +82,9 @@ class EXBarrier extends Module {
 
 object MEMBarrier {
   class Contents extends Bundle {
-    val PC = UInt(32.W)
+    val rd = UInt(5.W)
+    val wb = Bool()
+    val data = UInt(32.W)
   }
 }
 
