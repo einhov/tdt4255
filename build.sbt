@@ -51,33 +51,17 @@ val versionOfScala = "2.12.4"
 val fs2Version = "0.10.3"
 val catsVersion = "1.1.0"
 val catsEffectVersion = "0.10"
-libraryDependencies ++= Seq(
-    "org.typelevel" %% "cats-core" % catsVersion,             // abstract category dork stuff
-    "com.lihaoyi" %% "sourcecode" % "0.1.4",                  // expert println debugging
-    "com.lihaoyi" %% "pprint" % "0.5.3",                      // pretty print for types and case classes
-    "com.chuusai" %% "shapeless" % "2.3.2",                   // Abstract level category dork stuff
-
-    "org.typelevel" %% "cats-effect" % catsEffectVersion,     // IO monad category wank
-
-    "co.fs2" %% "fs2-core" % fs2Version,                      // The best library
-    "co.fs2" %% "fs2-io"   % fs2Version,                      // The best library
-    "org.tpolecat" %% "atto-core"    % "0.6.3",
-    "org.tpolecat" %% "atto-refined" % "0.6.3",
-    "org.typelevel" %% "spire" % "0.14.1"
-
-
-    // "npm" %%% "is-even" %% "12.3-SNAPSHOT"
-    // "npm" %%% "is-odd" %% "12.3-SNAPSHOT"
-    // "npm" %%% "is-number" %% "12.3-SNAPSHOT"
-  )
-
+libraryDependencies ++= Dependencies.backendDeps.value
 scalacOptions ++= scalacOptionsVersion(scalaVersion.value)
 scalacOptions ++= Seq("-language:reflectiveCalls")
 
 javacOptions ++= javacOptionsVersion(scalaVersion.value)
+
+// testOptions in Test += Tests.Argument("-oF")
 
 resolvers += Resolver.sonatypeRepo("releases")
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 
 testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-eS")
+
