@@ -2,6 +2,7 @@ package Ov1
 import atto._, Atto._
 import cats.Functor
 import cats.implicits._
+import utilz._
 
 import org.scalatest.{Matchers, FlatSpec}
 import spire.syntax.literals.radix._
@@ -249,6 +250,8 @@ object assembler {
 
       case SW(_, _, imm)    => setStypeImmediate(_, imm)
       case LW(_, _, imm)    => setItypeImmediate(_, imm)
+
+      case _ => ???
     }
   }
 

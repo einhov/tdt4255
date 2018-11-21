@@ -7,38 +7,29 @@ import spire.math.{UInt => Uint}
 import RISCVutils._
 import RISCVasm._
 
+import implicitImm._
+
 class pseudoAsmTest extends FlatSpec with Matchers {
 
-  it should "run a simple looping program" in {
+  val initRegs = Map(0 -> Uint(0))
+  val initMem = Map[Addr, Word]()
+  val initMachine = MachineState.applyWithSetup(initMem, initRegs)
 
-    // yeah, labels and shit
-    val program = List(
-      LABEL("loop"),
-      ADD(1, 1, 2),
-      ADD(1, 1, 2),
-      ADD(31, 1, 2),
-      ADD(31, 1, 2),
-      SW(4, 0, 0),
-      LW(4, 0, 0),
-      BNE(1, 3, "loop"),
-      DONE
-    )
-
-    val initRegs = Map(
-      0 -> Uint(0),
-      1 -> Uint(0),
-      2 -> Uint(1),
-      3 -> Uint(4),
-      4 -> Uint(31),
-      5 -> Uint(15),
-      31 -> Uint(0)
-    )
-
-    val initMem = Map[Addr, Word]()
-    val initMachine = MachineState(initMem, initRegs)
-
+  it should "square numbers" in {
     iotesters.Driver.execute(() => new Tile(), new TesterOptionsManager) { c =>
-      new TestRunner(RISCVProgram(program), initMachine, 100, c, true).run
+      new TestRunner(RISCVasm.toRealOps(fileUtils.run("programs/square.s").unsafeRunSync()), initMachine, 1000, c, true).run
+    } should be (true)
+  }
+
+  it should "run a naive recursive fibonnacci calculator" in {
+    iotesters.Driver.execute(() => new Tile(), new TesterOptionsManager) { c =>
+      new TestRunner(RISCVasm.toRealOps(fileUtils.run("programs/naiveFib.s").unsafeRunSync()), initMachine, 1000, c, true).run
+    } should be (true)
+  }
+
+  it should "run a memoized fibonnacci calculator" in {
+    iotesters.Driver.execute(() => new Tile(), new TesterOptionsManager) { c =>
+      new TestRunner(RISCVasm.toRealOps(fileUtils.run("programs/memoFib.s").unsafeRunSync()), initMachine, 1000, c, true).run
     } should be (true)
   }
 }

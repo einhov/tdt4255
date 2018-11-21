@@ -1,5 +1,6 @@
 package Ov1
 import spire.math.{UInt => Uint}
+import utilz._
 
 
 object RISCVOPS {
@@ -80,43 +81,43 @@ object RISCVOPS {
 
 
   def renderInstruction(op: OP): String = op match {
-    case BEQ(rs1, rs2, imm)  => s"BEQ    $rs1, $rs2, $imm \t;; PC <- (r$rs1 == r$rs2) ? PC <- PC + imm : PC <- PC + 4"
-    case BNE(rs1, rs2, imm)  => s"BNE    $rs1, $rs2, $imm \t;; PC <- (r$rs1 != r$rs2) ? PC <- PC + imm : PC <- PC + 4"
-    case BGE(rs1, rs2, imm)  => s"BGE    $rs1, $rs2, $imm \t;; PC <- (r$rs1 >= r$rs2) ? PC <- PC + imm : PC <- PC + 4"
-    case BLTU(rs1, rs2, imm) => s"BLTU   $rs1, $rs2, $imm \t;; PC <- (r$rs1 <  r$rs2) ? PC <- PC + imm : PC <- PC + 4"
-    case BGEU(rs1, rs2, imm) => s"BGEU   $rs1, $rs2, $imm \t;; PC <- (r$rs1 >= r$rs2) ? PC <- PC + imm : PC <- PC + 4"
-    case BLT(rs1, rs2, imm)  => s"BLT    $rs1, $rs2, $imm \t;; PC <- (r$rs1 <  r$rs2) ? PC <- PC + imm : PC <- PC + 4"
+    case BEQ(rs1, rs2, imm)  => s"BEQ ${rn(rs1)}, ${rn(rs2)}, $imm"
+    case BNE(rs1, rs2, imm)  => s"BNE ${rn(rs1)}, ${rn(rs2)}, $imm"
+    case BGE(rs1, rs2, imm)  => s"BGE ${rn(rs1)}, ${rn(rs2)}, $imm"
+    case BLTU(rs1, rs2, imm) => s"BLTU ${rn(rs1)}, ${rn(rs2)}, $imm"
+    case BGEU(rs1, rs2, imm) => s"BGEU ${rn(rs1)}, ${rn(rs2)}, $imm"
+    case BLT(rs1, rs2, imm)  => s"BLT ${rn(rs1)}, ${rn(rs2)}, $imm"
 
-    case JALR(rd, rs1, imm)  => s"JALR   $rd, $rs1, $imm  \t;; r$rd <- PC + Uint(4); PC <- r$rs1 + imm($imm)"
-    case JAL(rd, imm)        => s"JAL    $rd, $imm        \t;; r$rd <- PC + Uint(4); PC <- PC + imm($imm)"
+    case JALR(rd, rs1, imm)  => s"JALR ${rn(rd)}, ${rn(rs1)}, $imm"
+    case JAL(rd, imm)        => s"JAL ${rn(rd)}, $imm"
 
-    case ADD(rd: Reg, rs1: Reg, rs2: Reg) =>  s"ADD    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 + r$rs2 "
-    case SUB(rd: Reg, rs1: Reg, rs2: Reg) =>  s"SUB    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 - r$rs2 "
-    case AND(rd: Reg, rs1: Reg, rs2: Reg) =>  s"AND    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 & r$rs2 "
-    case XOR(rd: Reg, rs1: Reg, rs2: Reg) =>  s"XOR    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 ^ r$rs2 "
-    case  OR(rd: Reg, rs1: Reg, rs2: Reg) =>  s"OR     $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 | r$rs2 "
+    case ADD(rd: Reg, rs1: Reg, rs2: Reg) =>  s"ADD ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case SUB(rd: Reg, rs1: Reg, rs2: Reg) =>  s"SUB ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case AND(rd: Reg, rs1: Reg, rs2: Reg) =>  s"AND ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case XOR(rd: Reg, rs1: Reg, rs2: Reg) =>  s"XOR ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case  OR(rd: Reg, rs1: Reg, rs2: Reg) =>  s"OR ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)} "
 
-    case  SLLI(rd, rs1, imm) => s"SLLI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 << imm($imm)[0:4]"
-    case  SRLI(rd, rs1, imm) => s"SRLI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 >>> imm($imm)[0:4]"
-    case  SRAI(rd, rs1, imm) => s"SRAI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 >> imm($imm)[0:4]"
+    case  SLLI(rd, rs1, imm) => s"SLLI ${rn(rd)}, ${rn(rs1)}, $imm "
+    case  SRLI(rd, rs1, imm) => s"SRLI ${rn(rd)}, ${rn(rs1)}, $imm "
+    case  SRAI(rd, rs1, imm) => s"SRAI ${rn(rd)}, ${rn(rs1)}, $imm "
 
-    case  ADDI(rd, rs1, imm) => s"ADDI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 + imm($imm) "
-    case  ANDI(rd, rs1, imm) => s"ANDI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 & imm($imm) "
-    case  XORI(rd, rs1, imm) => s"XORI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 ^ imm($imm) "
-    case   ORI(rd, rs1, imm) => s" ORI   $rd, $rs1, $imm  \t;; r$rd <- r$rs1 | imm($imm) "
+    case  ADDI(rd, rs1, imm) => s"ADDI ${rn(rd)}, ${rn(rs1)}, $imm "
+    case  ANDI(rd, rs1, imm) => s"ANDI ${rn(rd)}, ${rn(rs1)}, $imm "
+    case  XORI(rd, rs1, imm) => s"XORI ${rn(rd)}, ${rn(rs1)}, $imm "
+    case   ORI(rd, rs1, imm) => s" ORI ${rn(rd)}, ${rn(rs1)}, $imm "
 
-    case  SLL(rd, rs1, rs2)   => s"SLL    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 << r$rs2[0:4] "
-    case  SRL(rd, rs1, rs2)   => s"SRL    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 >>> r$rs2[0:4] "
-    case  SRA(rd, rs1, rs2)   => s"SRA    $rd, $rs1, $rs2  \t;; r$rd <- r$rs1 >> r$rs2[0:4] "
-    case  SLTI(rd, rs1, imm)  => s"SLTI   $rd, $rs1, $imm  \t;; r$rd <- (r$rs1 > imm($imm)) ? 1 : 0"
-    case  SLTIU(rd, rs1, imm) => s"SLTIU  $rd, $rs1, $imm  \t;; r$rd <- (r$rs1 > imm($imm)) ? 1 : 0"
-    case  SLT(rd, rs1, rs2)   => s"SLT    $rd, $rs1, $rs2  \t;; r$rd <- (r$rs1 > r$rs2) ? 1 : 0"
-    case  SLTU(rd, rs1, rs2)  => s"SLTU   $rd, $rs1, $rs2  \t;; r$rd <- (r$rs1 > r$rs2) ? 1 : 0"
-    case  LUI(rd, imm)        => s"LUI    $rd, $imm        \t;; r$rd <- imm($imm) << 12 "
-    case  AUIPC(rd, imm)      => s"AUIPC  $rd, $imm        \t;; r$rd <- PC + (imm($imm) << 12) "
+    case  SLL(rd, rs1, rs2)   => s"SLL ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case  SRL(rd, rs1, rs2)   => s"SRL ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case  SRA(rd, rs1, rs2)   => s"SRA ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case  SLTI(rd, rs1, imm)  => s"SLTI ${rn(rd)}, ${rn(rs1)}, $imm"
+    case  SLTIU(rd, rs1, imm) => s"SLTIU ${rn(rd)}, ${rn(rs1)}, $imm"
+    case  SLT(rd, rs1, rs2)   => s"SLT ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)} "
+    case  SLTU(rd, rs1, rs2)  => s"SLTU ${rn(rd)}, ${rn(rs1)}, ${rn(rs2)}"
+    case  LUI(rd, imm)        => s"LUI ${rn(rd)}, $imm"
+    case  AUIPC(rd, imm)      => s"AUIPC ${rn(rd)}, $imm"
 
-    case  SW(rs2, rs1, offset) => s"SW     $rs2, $offset($rs2) ;; MEM[r$rs1 + $offset] <- r$rs2"
-    case  LW(rd, rs1, offset)  => s"LW     $rd,  $offset($rs1) ;; r$rd <- MEM[r$rs1 + $offset]"
+    case  SW(rs2, rs1, offset) => s"SW ${rn(rs2)}, $offset(${rn(rs2)})"
+    case  LW(rd, rs1, offset)  => s"LW ${rn(rd)},  $offset(${rn(rs1)})"
 
     case  NOP => "NOP"
     case _ => "We done"
@@ -145,7 +146,7 @@ object RISCVOPS {
                          signed: Boolean = false): (MachineState, MachineState) => String = { case(old, next) =>
 
       s"r${rd} changed from ${old.regs(rd).show(signed)} to ${old.regs(rs1).show(signed)} $opString ${hs(old.regs(rs2))} = ${hs(next.regs(rd))}" ++
-        s"\tPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+        s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
   def describeArithmeticImm(rd: Reg,
@@ -155,7 +156,7 @@ object RISCVOPS {
                             signed: Boolean = false): (MachineState, MachineState) => String = { case(old, next) =>
 
       s"r${rd} changed from ${old.regs(rd).show(signed)} to ${old.regs(rs1).show(signed)} $opString $imm = ${hs(next.regs(rd))}" ++
-        s"\tPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
+        s"\nPC changed from ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
   def describeShift(rd: Reg,
@@ -164,7 +165,7 @@ object RISCVOPS {
                     opString: String): (MachineState, MachineState) => String = { case(old, next) =>
 
       s"r${rd} changed from ${hs(old.regs(rd))} to r${hs(old.regs(rs1))} $opString ${hs(old.regs(rs2))}[0:4] = ${hs(next.regs(rd))}" ++
-        s"\tPC changed froold ${hs(old.pc)} to ${hs(next.pc)}"
+        s"\nPC changed froold ${hs(old.pc)} to ${hs(next.pc)}"
   }
 
   def describeShiftImm(rd: Reg,
@@ -353,7 +354,7 @@ object RISCVOPS {
     case  SW(rs2, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)
       if(address > Uint(4096))
-        Left(s"Attempted illegal write at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
+        Left(s"Attempted illegal write at $address (from reg ${rn(rs1)} (with value ${m.regs(rs1)}) + $offset)")
       else {
         val next = MachineState(m.mem.updated(address, m.regs(rs2)), m.regs, m.pc + Uint(4))
         Right((next,  StateUpdate.logMem(address, next)))
@@ -363,12 +364,12 @@ object RISCVOPS {
     case  LW(rd, rs1, offset) => m => {
       val address = Uint(offset + m.regs(rs1).toInt)
       val inRange = if(address > Uint(4096))
-                      Left(s"Attempted illegal read at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)")
+                      Left(s"Attempted illegal read at $address (from reg ${rn(rs1)} (with value ${m.regs(rs1)}) + $offset)")
                     else
                       Right(address)
 
       val unInitializedErrorMsg =
-        s"Attempted read at $address (from reg $rs1 (with value ${m.regs(rs1)}) + $offset)\n" ++
+        s"Attempted read at $address (from reg ${rn(rs1)} (with value ${m.regs(rs1)}) + $offset). PC address: ${hs(m.pc)}\n" ++
           "This is a LEGAL address, and according to spec should return whatever happens to be at this location.\n" ++
           "However YOUR program has not defined what should be on this address, and therefore it is highly unlikely\n" ++
           "That this is intended behavior. If you disagree feel free to edit the source code"
@@ -391,5 +392,44 @@ object RISCVOPS {
       val next = m.copy(pc = Uint(0xF01D1EF7))
       Right((next, StateUpdate(next)))
     }
+  }
+
+  def rn(i: Int): String = i match {
+    case 0  => "zero"
+    case 1  => "ra"
+    case 2  => "sp"
+    case 3  => "gp"
+    case 4  => "tp"
+    case 5  => "t0"
+    case 6  => "t1"
+    case 7  => "t2"
+    case 8  => "fp"
+    case 9  => "s1"
+
+    case 10 => "a0"
+    case 11 => "a1"
+    case 12 => "a2"
+    case 13 => "a3"
+    case 14 => "a4"
+    case 15 => "a5"
+    case 16 => "a6"
+    case 17 => "a7"
+    case 18 => "s2"
+    case 19 => "s3"
+
+    case 20 => "s4"
+    case 21 => "s5"
+    case 22 => "s6"
+    case 23 => "s7"
+    case 24 => "s8"
+    case 25 => "s9"
+    case 26 => "s10"
+    case 27 => "s11"
+    case 28 => "t3"
+    case 29 => "t4"
+
+    case 30 => "t5"
+    case 31 => "t6"
+    case  _ => "ERROR"
   }
 }

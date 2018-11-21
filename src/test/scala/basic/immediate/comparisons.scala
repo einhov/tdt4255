@@ -8,6 +8,8 @@ import RISCVutils._
 import RISCVasm._
 import regNames._
 
+import implicitImm._
+
 class ImmidiateComparisonsTests extends FlatSpec with Matchers {
 
   val timeout = 300

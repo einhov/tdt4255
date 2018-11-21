@@ -46,7 +46,7 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
 
     if(d.peek(d.dut.io.regsDeviceWriteEnable) == 1){
       val regWriteAddress = d.peek(d.dut.io.regsDeviceWriteAddress)
-      if((expected.isEmpty)) {
+      if(expected.isEmpty) {
         if(!(Uint(regWriteAddress.toInt) == Uint(0))) {
           Left("Unexpected register write. (Emulator recorded less writes than your design)")
         }
@@ -155,6 +155,32 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
       d.poke(d.dut.io.running, 1)
     }
 
+    def stepNOP(
+      flushesLeft: Int,
+      expectedRegUpdates: List[(Reg, Word)],
+      expectedMemUpdates: List[(Addr, Word)],
+      d: PeekPokeTester[Tile]
+    ): Unit = {
+
+      if(flushesLeft == 0){
+        if(expectedMemUpdates.isEmpty && expectedRegUpdates.isEmpty) {
+          println("You're winner!")
+        }
+        else{
+          println("Program terminated successfully, but expected reg/mem updates have not happened.")
+          d.fail
+        }
+      }
+      else{
+        stepOne(expectedRegUpdates, expectedMemUpdates, PCTrace(Nil), PCLog(Nil), 0, d) match {
+          case Right((nextReg, nextMem, _, _, _)) => stepNOP(flushesLeft - 1, nextReg, nextMem, d)
+          case Left(s) => { println(s); d.fail }
+        }
+      }
+
+    }
+
+
     def stepMany(
       timeOut: Int,
       expectedRegUpdates: List[(Reg, Word)],
@@ -171,13 +197,7 @@ class TestRunner(program: RISCVProgram, init: MachineState, stepsTimeOut: Int, c
         d.fail
       }
       else if(Uint(d.peek(d.dut.io.currentPC).toInt) == Uint(finishLine)){
-        if(expectedMemUpdates.isEmpty && expectedRegUpdates.isEmpty) {
-          println("You're winner!")
-        }
-        else{
-          println("Program terminated successfully, but expected reg/mem updates have not happened.")
-          d.fail
-        }
+        stepNOP(5, expectedRegUpdates, expectedMemUpdates, d)
       }
       else {
         stepOne(expectedRegUpdates, expectedMemUpdates, pcTrace, expectedPCupdates, misses, d) match {

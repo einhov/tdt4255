@@ -1,4 +1,3 @@
-
 package Ov1
 import chisel3._
 import chisel3.iotesters._
@@ -8,6 +7,8 @@ import spire.math.{UInt => Uint}
 import RISCVutils._
 import RISCVasm._
 import regNames._
+
+import implicitImm._
 
 class RegisterComparisonTests extends FlatSpec with Matchers {
 

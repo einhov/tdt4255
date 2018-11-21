@@ -1,6 +1,7 @@
 package Ov1
 import spire.math.{UInt => Uint}
-
+import utilz._
+import regNames._
 
 object RISCVutils {
 
@@ -40,8 +41,8 @@ object RISCVutils {
     }
 
     def getInitState: MachineState = executionLog.head
-
   }
+
 
   case class RISCVProgram(instructions: Map[Addr, OP]){
     def getInstruction(addr: Addr): Either[RuntimeError, OP] =
@@ -52,19 +53,15 @@ object RISCVutils {
       ExecutionLog(stateLog, opLog, updateLog, error.toLeft(("Program terminated successfully", stateLog.takeRight(2).head.pc)))
     }
   }
-
   object RISCVProgram {
 
-    def apply(ops: List[RISCVasm.asmOP]): RISCVProgram = RISCVProgram(
-      RISCVasm.toRealOpsWithNOP(ops ::: List(RISCVasm.DONE)).zipWithIndex.map {
-        case(op, idx) =>
-          (Uint(idx*4), op)
-      }.toMap)
+    def apply(ops: List[RISCVasm.asmOP]): RISCVProgram = {
+      RISCVasm.toRealOps(ops)
+    }
   }
 
 
   case class MachineState(mem: Map[Uint, Uint], regs: Map[Int, Uint], pc: Uint){
-
 
     def updateMem(addr: Addr, word: Word): Option[MachineState] =
       mem.lift(addr).map{ _ =>
@@ -80,8 +77,23 @@ object RISCVutils {
 
     def readMem(addr: Addr): Option[Word] =
       mem.lift(addr)
+
   }
   object MachineState {
+
+    def applyWithSetup(mem: Map[Uint, Uint], regs: Map[Int, Uint]): MachineState = {
+
+      val regz = (0 to 31).foldLeft(regs){ case(regMap, idx) =>
+        if (regMap.keys.exists(idx == _))
+          regMap
+        else
+          regMap.updated(idx, Uint(0))
+      }.updated(ra, Uint(1000))
+        .updated(sp, Uint(1024))
+
+      MachineState(mem, regz, Uint(0))
+    }
+
     def apply(mem: Map[Uint, Uint], regs: Map[Int, Uint]): MachineState = {
 
       val regz = (0 to 31).foldLeft(regs){ case(regMap, idx) =>
@@ -99,46 +111,5 @@ object RISCVutils {
       val mem = Map[Uint,Uint]()
       MachineState(mem, regs, Uint(0))
     }
-  }
-
-
-
-  def hs(u: Uint): String = {
-    s"0x${u.toInt.toHexString.toUpperCase()}"
-  }
-
-  def asNdigitBinary (source: Int, digits: Int): String = {
-    val l  = source.toBinaryString
-    val padLen = digits - l.size
-    val pad = ("" /: (0 until padLen).map(_ => "0"))(_+_)
-    pad + l
-  }
-  def as32BinarySpaced (source: Int): String = {
-    val l  = source.toBinaryString
-    val padLen = 32 - l.size
-    val pad = ("" /: (0 until padLen).map(_ => "0"))(_+_)
-    val s = pad + l
-    s.take(8) + " " + s.drop(8).take(8) + " " + s.drop(16).take(8) + " " + s.drop(24).take(8)
-  }
-
-  def asHex(b: Int): String = f"0x$b%08x"
-  def asBin(b: Int): String = {
-    "0b" + asNdigitBinary(b, 32)
-  }
-
-  val lnOf2 = scala.math.log(2) // natural log of 2
-  def log2(x: Int): Int = {
-    (scala.math.log(x) / lnOf2).toInt
-  }
-
-
-  implicit class UintExt(val self: Uint) {
-    def showS: String = s"${self.toInt}"
-    def showU: String = hs(self)
-    def show(signed: Boolean): String =
-      if(signed)
-        showS
-      else
-        showU
   }
 }
