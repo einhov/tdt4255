@@ -1,6 +1,7 @@
 package Ov1
 
 import chisel3._
+import chisel3.util._
 
 object IFBarrier {
   class Contents extends Bundle {
@@ -14,10 +15,11 @@ class IFBarrier extends Module {
     new Bundle {
       val in = Input(new IFBarrier.Contents)
       val out = Output(new IFBarrier.Contents)
+      val freeze = Input(Bool())
     }
   )
 
-  val PC_delay = RegNext(io.in.PC)
+  val PC_delay = RegEnable(io.in.PC, ~io.freeze)
 
   io.out.insn := io.in.insn
   io.out.PC := PC_delay
@@ -28,8 +30,10 @@ object IDBarrier {
     val PC = UInt(32.W)
     val controlSignals = new ControlSignals
     val branchType = UInt(3.W)
-    val rs1 = UInt(32.W)
-    val rs2 = UInt(32.W)
+    val rs1 = UInt(4.W)
+    val rs2 = UInt(4.W)
+    val rv1 = UInt(32.W)
+    val rv2 = UInt(32.W)
     val op1Sel = UInt(1.W)
     val op2Sel = UInt(1.W)
     val immediate = UInt(32.W)
@@ -43,11 +47,14 @@ class IDBarrier extends Module {
     new Bundle {
       val in = Input(new IDBarrier.Contents)
       val out = Output(new IDBarrier.Contents)
+      val freeze = Input(Bool())
     }
   )
 
   val contents = Reg(new IDBarrier.Contents)
-  contents <> io.in
+  when(!io.freeze) {
+    contents <> io.in
+  }
   io.out <> contents
 }
 
@@ -65,6 +72,8 @@ object EXBarrier {
 
     val branch = Bool()
     val target = UInt(32.W)
+
+    val forward = new RegisterForwardSignals
   }
 }
 
@@ -73,11 +82,27 @@ class EXBarrier extends Module {
     new Bundle {
       val in = Input(new EXBarrier.Contents)
       val out = Output(new EXBarrier.Contents)
+      val nop = Input(Bool())
     }
   )
 
-  val contents = Reg(new EXBarrier.Contents)
-  contents <> io.in
+  val nop = Wire(new EXBarrier.Contents)
+  nop.PC := 0.U
+  nop.address := 0.U
+  nop.read := false.B
+  nop.write := false.B
+  nop.write_data := 0.U
+  nop.rd := 0.U
+  nop.wb := false.B
+  nop.data := 0.U
+  nop.branch := false.B
+  nop.target := 0.U
+  nop.forward.operand := 0.U
+  nop.forward.value := 0.U
+
+  val contents = RegInit(new EXBarrier.Contents, nop)
+
+  contents := Mux(!io.nop, io.in, nop)
   io.out <> contents
 }
 
@@ -89,6 +114,8 @@ object MEMBarrier {
     val register_data = UInt(32.W)
     val memory_data = UInt(32.W)
     val dataIsFromMem = Bool()
+
+    val forward = new RegisterForwardSignals
   }
 }
 

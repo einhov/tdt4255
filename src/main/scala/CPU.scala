@@ -79,4 +79,25 @@ class CPU extends Module {
   // Branching
   IF.branch := EXBarrier.out.branch
   IF.target := EXBarrier.out.target
+
+  // Forwarding
+  ID.forward <> MEMBarrier.out.forward
+  EX.forward_ex <> EXBarrier.out.forward
+  EX.forward_mem <> MEMBarrier.out.forward
+
+  IF.freeze := false.B
+  IFBarrier.freeze := false.B
+  IDBarrier.freeze := false.B
+  EXBarrier.nop := false.B
+
+  // Stall for register read directly after memory load
+  val is_branch = IDBarrier.out.controlSignals.branch
+  val rs1_match = (is_branch || (!IDBarrier.out.op1Sel)) && (IDBarrier.out.rs1 === EXBarrier.out.rd)
+  val rs2_match = (is_branch || (!IDBarrier.out.op2Sel)) && (IDBarrier.out.rs2 === EXBarrier.out.rd)
+  when(EXBarrier.out.read && (rs1_match || rs2_match)) {
+    IF.freeze := true.B
+    IFBarrier.freeze := true.B
+    IDBarrier.freeze := true.B
+    EXBarrier.nop := true.B
+  }
 }

@@ -14,6 +14,8 @@ class InstructionDecode extends Module {
       val wb = Input(Bool())
       val data = Input(UInt(32.W))
 
+      val forward = Input(new RegisterForwardSignals)
+
       // setup/test
       val registerSetup     = Input(new RegisterSetupSignals)
       val registerPeek      = Output(UInt(32.W))
@@ -75,11 +77,15 @@ class InstructionDecode extends Module {
     immediate := 0.U
   }
 
+  val rv1 = Mux(io.forward.valid() && (rs1 === io.forward.operand), io.forward.value, registers.readData1)
+  val rv2 = Mux(io.forward.valid() && (rs2 === io.forward.operand), io.forward.value, registers.readData2)
   io.out.controlSignals := control.controlSignals
   io.out.branchType := control.branchType
   io.out.ALUop := control.ALUop
-  io.out.rs1 := registers.readData1
-  io.out.rs2 := registers.readData2
+  io.out.rs1 := rs1
+  io.out.rs2 := rs2
+  io.out.rv1 := rv1
+  io.out.rv2 := rv2
   io.out.op1Sel := control.op1Select
   io.out.op2Sel := control.op2Select
   io.out.rd := insn_bits(11, 7)

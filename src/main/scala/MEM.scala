@@ -35,4 +35,7 @@ class MemoryFetch() extends Module {
   io.out.dataIsFromMem := io.in.read
 
   io.out.PC := io.in.PC
+
+  io.out.forward.operand := Mux(io.in.wb, io.in.rd, 0.U)
+  io.out.forward.value := Mux(io.in.read, readData, io.in.data)
 }
