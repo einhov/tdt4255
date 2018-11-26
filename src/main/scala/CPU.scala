@@ -19,6 +19,8 @@ class CPU extends Module {
       val IDBarrierSpy  = Output(new Ov1.IDBarrier.Contents)
       val EXBarrierSpy  = Output(new Ov1.EXBarrier.Contents)
       val MEMBarrierSpy = Output(new Ov1.MEMBarrier.Contents)
+
+      val freeze = Output(Bool())
     }
   )
 
@@ -89,6 +91,7 @@ class CPU extends Module {
   IFBarrier.freeze := false.B
   IDBarrier.freeze := false.B
   EXBarrier.nop := false.B
+  io.freeze := false.B
 
   // Stall for register read directly after memory load
   val is_branch = IDBarrier.out.controlSignals.branch
@@ -99,5 +102,6 @@ class CPU extends Module {
     IFBarrier.freeze := true.B
     IDBarrier.freeze := true.B
     EXBarrier.nop := true.B
+    io.freeze := true.B
   }
 }

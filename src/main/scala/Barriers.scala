@@ -19,9 +19,21 @@ class IFBarrier extends Module {
     }
   )
 
+  // Instruction holding during freeze
+  val insn_held = RegInit(false.B)
+  val insn_hold = Reg(new Instruction)
+  when(io.freeze && !insn_held) {
+    insn_hold := io.in.insn
+    insn_held := true.B
+  }
+
+  when(!io.freeze && insn_held) {
+    insn_held := false.B
+  }
+
   val PC_delay = RegEnable(io.in.PC, ~io.freeze)
 
-  io.out.insn := io.in.insn
+  io.out.insn := Mux(!insn_held, io.in.insn, insn_hold)
   io.out.PC := PC_delay
 }
 

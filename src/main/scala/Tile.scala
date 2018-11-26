@@ -41,6 +41,8 @@ class Tile() extends Module{
       val IDBarrierSpy           = Output(new IDBarrier.Contents)
       val EXBarrierSpy           = Output(new EXBarrier.Contents)
       val MEMBarrierSpy          = Output(new MEMBarrier.Contents)
+  
+      val freeze = Output(Bool())
     })
 
   val CPU = Module(new CPU).io
@@ -76,6 +78,7 @@ class Tile() extends Module{
   io.EXBarrierSpy <> CPU.EXBarrierSpy
   io.MEMBarrierSpy <> CPU.MEMBarrierSpy
   CPU.running := io.running
+  io.freeze := CPU.freeze
 }
 
 
