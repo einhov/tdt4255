@@ -34,6 +34,7 @@ class InstructionFetch extends Module {
 
   when(io.IMEMsetup.setup) {
     PC := 0.U
+    instruction := Instruction.default
   }
 
   io.PC := PC
