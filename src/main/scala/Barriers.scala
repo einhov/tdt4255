@@ -16,6 +16,7 @@ class IFBarrier extends Module {
       val in = Input(new IFBarrier.Contents)
       val out = Output(new IFBarrier.Contents)
       val freeze = Input(Bool())
+      val nop = Input(Bool())
     }
   )
 
@@ -35,6 +36,13 @@ class IFBarrier extends Module {
 
   io.out.insn := Mux(!insn_held, io.in.insn, insn_hold)
   io.out.PC := PC_delay
+
+  when(io.nop) {
+    insn_held := false.B
+    io.out.PC := 0.U
+    io.out.insn := Instruction.default
+  }
+
 }
 
 object IDBarrier {
@@ -60,14 +68,29 @@ class IDBarrier extends Module {
       val in = Input(new IDBarrier.Contents)
       val out = Output(new IDBarrier.Contents)
       val freeze = Input(Bool())
+      val nop = Input(Bool())
     }
   )
 
+  val nop = Wire(new IDBarrier.Contents)
+  nop.PC := 0.U
+  nop.controlSignals := ControlSignals.nop
+  nop.branchType := 0.U
+  nop.rs1 := 0.U
+  nop.rs2 := 0.U
+  nop.rv1 := 0.U
+  nop.rv2 := 0.U
+  nop.op1Sel := 0.U
+  nop.op2Sel := 0.U
+  nop.immediate := 0.U
+  nop.rd := 0.U
+  nop.ALUop := 0.U
+
   val contents = Reg(new IDBarrier.Contents)
   when(!io.freeze) {
-    contents <> io.in
+    contents := Mux(!io.nop, io.in, nop)
   }
-  io.out <> contents
+  io.out := Mux(!io.nop, contents, nop)
 }
 
 object EXBarrier {

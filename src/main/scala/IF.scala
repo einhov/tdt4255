@@ -22,22 +22,21 @@ class InstructionFetch extends Module {
   val PC = RegInit(UInt(32.W), 0.U)
   IMEM.setup := io.IMEMsetup
 
-  IMEM.instructionAddress := PC
+  val target_pc = Mux(!io.branch, PC, io.target)
+  val next_pc = target_pc + 4.U
+
+  IMEM.instructionAddress := target_pc
   val instruction = Wire(new Instruction)
   instruction := IMEM.instruction.asTypeOf(new Instruction)
 
-  // Update PC
-  PC := MuxCase(PC + 4.U, Array(
-    io.freeze -> PC,
-    io.branch -> io.target
-  ))
+  PC := Mux(!io.freeze, next_pc, PC)
 
   when(io.IMEMsetup.setup) {
     PC := 0.U
     instruction := Instruction.default
   }
 
-  io.PC := PC
-  io.out.PC := PC
+  io.PC := target_pc
+  io.out.PC := target_pc
   io.out.insn := instruction
 }

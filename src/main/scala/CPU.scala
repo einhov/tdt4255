@@ -53,7 +53,7 @@ class CPU extends Module {
     */
   io.regUpdates := ID.testUpdates
   io.memUpdates := MEM.testUpdates
-  io.currentPC  := IF.out.PC
+  io.currentPC  := MEMBarrier.out.PC
   io.currentInsn  := IF.out.insn
 
   /**
@@ -104,4 +104,8 @@ class CPU extends Module {
     EXBarrier.nop := true.B
     io.freeze := true.B
   }
+
+  // Bubble on branch taken
+  IFBarrier.nop := EXBarrier.out.branch
+  IDBarrier.nop := EXBarrier.out.branch
 }
