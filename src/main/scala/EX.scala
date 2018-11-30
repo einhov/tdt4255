@@ -9,6 +9,9 @@ class Execute extends Module {
       val out = Output(new EXBarrier.Contents)
       val forward_ex = Input(new RegisterForwardSignals)
       val forward_mem = Input(new RegisterForwardSignals)
+
+      val branchTaken = Output(Bool())
+      val updateBranchTaken = Output(Bool())
     }
   )
 
@@ -42,6 +45,8 @@ class Execute extends Module {
   }
   io.out.data := aluResult
 
+  io.updateBranchTaken := false.B
+  io.branchTaken := DontCare
   when(io.in.controlSignals.jump) {
     io.out.branch := true.B
     io.out.target := aluResult & (0.U(32.W) - 2.U)
@@ -58,9 +63,25 @@ class Execute extends Module {
       is(branchType.ltu ) { take_branch := rv1  <   rv2  }
       is(branchType.neq ) { take_branch := rv1  =/= rv2  }
     }
-    io.out.branch := take_branch
-    io.out.target := aluResult
+
+    io.out.branch := false.B
+    io.out.target := 0.U
     io.out.data := 0.U
+    when(take_branch) {
+      when(!io.in.branchEarly) {
+        io.out.branch := true.B
+        io.out.target := aluResult
+      }
+      io.branchTaken := true.B
+      io.updateBranchTaken := true.B
+    } .otherwise {
+      when(io.in.branchEarly) {
+        io.out.branch := true.B
+        io.out.target := io.in.PC + 4.U
+      }
+      io.branchTaken := false.B
+      io.updateBranchTaken := true.B
+    }
   } .otherwise {
     io.out.branch := false.B
     io.out.target := 0.U

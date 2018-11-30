@@ -59,6 +59,9 @@ object IDBarrier {
     val immediate = UInt(32.W)
     val rd = UInt(5.W)
     val ALUop = UInt(4.W)
+
+    val branchEarly = Bool()
+    val target = Bool()
   }
 }
 
@@ -85,6 +88,8 @@ class IDBarrier extends Module {
   nop.immediate := 0.U
   nop.rd := 0.U
   nop.ALUop := 0.U
+  nop.branchEarly := false.B
+  nop.target := DontCare
 
   val contents = Reg(new IDBarrier.Contents)
   when(!io.freeze) {

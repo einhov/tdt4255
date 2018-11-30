@@ -15,6 +15,7 @@ class InstructionDecode extends Module {
       val data = Input(UInt(32.W))
 
       val forward = Input(new RegisterForwardSignals)
+      val branchPred = Input(Bool())
 
       // setup/test
       val registerSetup     = Input(new RegisterSetupSignals)
@@ -91,4 +92,12 @@ class InstructionDecode extends Module {
   io.out.rd := insn_bits(11, 7)
   io.out.immediate := immediate
   io.out.PC := io.in.PC
+
+  when(control.controlSignals.branch && io.branchPred) {
+    io.out.branchEarly := true.B
+    io.out.target := io.in.PC + immediate
+  } .otherwise {
+    io.out.branchEarly := false.B
+    io.out.target := 0.U
+  }
 }

@@ -1,6 +1,7 @@
 package Ov1
 
 import chisel3._
+import chisel3.util._
 import chisel3.core.Input
 
 class CPU extends Module {
@@ -53,7 +54,7 @@ class CPU extends Module {
     */
   io.regUpdates := ID.testUpdates
   io.memUpdates := MEM.testUpdates
-  io.currentPC  := MEMBarrier.out.PC
+  io.currentPC  := IDBarrier.out.PC
   io.currentInsn  := IF.out.insn
 
   /**
@@ -79,8 +80,30 @@ class CPU extends Module {
   io.MEMBarrierSpy <> MEMBarrier.out
 
   // Branching
-  IF.branch := EXBarrier.out.branch
-  IF.target := EXBarrier.out.target
+
+  // Dont branch by default
+  IF.branch := false.B
+  IF.target := DontCare
+  IFBarrier.nop := false.B
+  IDBarrier.nop := false.B
+
+  when(EXBarrier.out.branch) {
+    IF.branch := true.B
+    IF.target := EXBarrier.out.target
+
+    // Bubble two instructions
+    IFBarrier.nop := true.B
+    IDBarrier.nop := true.B
+  } .elsewhen(IDBarrier.out.branchEarly) {
+    IF.branch := true.B
+    IF.target := IDBarrier.out.target
+
+    // Bubble one instruction
+    IFBarrier.nop := true.B
+  }
+
+  val branchPred = RegEnable(EX.branchTaken, true.B, EX.updateBranchTaken)
+  ID.branchPred := branchPred
 
   // Forwarding
   ID.forward <> MEMBarrier.out.forward
@@ -104,8 +127,4 @@ class CPU extends Module {
     EXBarrier.nop := true.B
     io.freeze := true.B
   }
-
-  // Bubble on branch taken
-  IFBarrier.nop := EXBarrier.out.branch
-  IDBarrier.nop := EXBarrier.out.branch
 }
